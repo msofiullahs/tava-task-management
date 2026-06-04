@@ -40,7 +40,9 @@ export function ListView({ projectId, statuses, tasks, onOpenTask, onAddInStatus
   }
 
   return (
-    <div className="space-y-6 p-4 lg:p-6">
+    // ProjectPage clips its view container with overflow-hidden (Board needs horizontal-only
+    // scroll). List + Calendar opt into vertical scroll themselves so the chain doesn't bubble.
+    <div className="h-full space-y-6 overflow-y-auto p-4 lg:p-6">
       {groups.map(({ status, items }) => (
         <Group
           key={status.id}
