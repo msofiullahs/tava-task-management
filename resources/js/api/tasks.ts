@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import http from '../lib/axios';
+import type { ProjectKey } from './projects';
 import type { Priority, Task } from '../types';
 
 interface StoreTaskPayload {
@@ -26,31 +27,31 @@ interface MoveTaskPayload {
   after_id?: number | null;
 }
 
-export function useTasks(projectId: number | undefined) {
+export function useTasks(projectKey: ProjectKey | undefined) {
   return useQuery({
-    queryKey: ['projects', projectId, 'tasks'],
+    queryKey: ['projects', projectKey, 'tasks'],
     queryFn: async () =>
-      (await http.get<{ data: Task[] }>(`/projects/${projectId}/tasks`)).data.data,
-    enabled: projectId !== undefined,
+      (await http.get<{ data: Task[] }>(`/projects/${projectKey}/tasks`)).data.data,
+    enabled: projectKey !== undefined,
   });
 }
 
-export function useCreateTask(projectId: number) {
+export function useCreateTask(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: StoreTaskPayload) =>
-      (await http.post<{ task: Task }>(`/projects/${projectId}/tasks`, payload)).data.task,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] }),
+      (await http.post<{ task: Task }>(`/projects/${projectKey}/tasks`, payload)).data.task,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectKey, 'tasks'] }),
   });
 }
 
-export function useUpdateTask(projectId: number) {
+export function useUpdateTask(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: { id: number } & UpdateTaskPayload) =>
       (await http.patch<{ task: Task }>(`/tasks/${id}`, payload)).data.task,
     onSuccess: (task) => {
-      qc.setQueryData<Task[] | undefined>(['projects', projectId, 'tasks'], (prev) =>
+      qc.setQueryData<Task[] | undefined>(['projects', projectKey, 'tasks'], (prev) =>
         prev ? prev.map((t) => (t.id === task.id ? task : t)) : prev,
       );
     },
@@ -58,44 +59,44 @@ export function useUpdateTask(projectId: number) {
 }
 
 /** Optimistic move (spec §8: card moves instantly; roll back on error). */
-export function useMoveTask(projectId: number) {
+export function useMoveTask(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: { id: number } & MoveTaskPayload) =>
       (await http.patch<{ task: Task }>(`/tasks/${id}/move`, payload)).data.task,
     onMutate: async ({ id, status_id }) => {
-      await qc.cancelQueries({ queryKey: ['projects', projectId, 'tasks'] });
-      const prev = qc.getQueryData<Task[]>(['projects', projectId, 'tasks']);
+      await qc.cancelQueries({ queryKey: ['projects', projectKey, 'tasks'] });
+      const prev = qc.getQueryData<Task[]>(['projects', projectKey, 'tasks']);
       if (prev) {
-        qc.setQueryData<Task[]>(['projects', projectId, 'tasks'],
+        qc.setQueryData<Task[]>(['projects', projectKey, 'tasks'],
           prev.map((t) => (t.id === id ? { ...t, status_id } : t)),
         );
       }
       return { prev };
     },
     onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(['projects', projectId, 'tasks'], ctx.prev);
+      if (ctx?.prev) qc.setQueryData(['projects', projectKey, 'tasks'], ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['projects', projectKey, 'tasks'] }),
   });
 }
 
-export function useDeleteTask(projectId: number) {
+export function useDeleteTask(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) => {
       await http.delete(`/tasks/${id}`);
       return id;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectKey, 'tasks'] }),
   });
 }
 
-export function useRestoreTask(projectId: number) {
+export function useRestoreTask(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: number) =>
       (await http.post<{ task: Task }>(`/tasks/${id}/restore`)).data.task,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectId, 'tasks'] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['projects', projectKey, 'tasks'] }),
   });
 }

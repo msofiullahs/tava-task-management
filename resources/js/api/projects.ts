@@ -2,6 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import http from '../lib/axios';
 import type { Project } from '../types';
 
+/**
+ * The project "key" used in URLs and React Query keys is the project's uuid
+ * (string), not its numeric primary key. Route-model binding on the API
+ * resolves the uuid back to a Project, so the same string flows through
+ * both layers.
+ */
+export type ProjectKey = string;
+
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
@@ -9,11 +17,11 @@ export function useProjects() {
   });
 }
 
-export function useProject(projectId: number | undefined) {
+export function useProject(projectKey: ProjectKey | undefined) {
   return useQuery({
-    queryKey: ['projects', projectId],
-    queryFn: async () => (await http.get<{ project: Project }>(`/projects/${projectId}`)).data.project,
-    enabled: projectId !== undefined,
+    queryKey: ['projects', projectKey],
+    queryFn: async () => (await http.get<{ project: Project }>(`/projects/${projectKey}`)).data.project,
+    enabled: projectKey !== undefined,
   });
 }
 
@@ -26,14 +34,14 @@ export function useCreateProject() {
   });
 }
 
-export function useUpdateProject(projectId: number) {
+export function useUpdateProject(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { name?: string; description?: string | null }) =>
-      (await http.patch<{ project: Project }>(`/projects/${projectId}`, payload)).data.project,
+      (await http.patch<{ project: Project }>(`/projects/${projectKey}`, payload)).data.project,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects'] });
-      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects', projectKey] });
     },
   });
 }
@@ -41,22 +49,22 @@ export function useUpdateProject(projectId: number) {
 export function useDeleteProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (projectId: number) => {
-      await http.delete(`/projects/${projectId}`);
-      return projectId;
+    mutationFn: async (projectKey: ProjectKey) => {
+      await http.delete(`/projects/${projectKey}`);
+      return projectKey;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });
 }
 
-export function useUpdateProjectMembers(projectId: number) {
+export function useUpdateProjectMembers(projectKey: ProjectKey) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (user_ids: number[]) =>
-      (await http.patch<{ project: Project }>(`/projects/${projectId}/members`, { user_ids })).data.project,
+      (await http.patch<{ project: Project }>(`/projects/${projectKey}/members`, { user_ids })).data.project,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects'] });
-      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+      qc.invalidateQueries({ queryKey: ['projects', projectKey] });
     },
   });
 }

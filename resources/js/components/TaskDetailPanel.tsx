@@ -25,9 +25,9 @@ interface TaskDetailPanelProps {
 
 export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProps) {
   const { data: user } = useCurrentUser();
-  const update = useUpdateTask(task.project_id);
-  const remove = useDeleteTask(task.project_id);
-  const restore = useRestoreTask(task.project_id);
+  const update = useUpdateTask(task.project_uuid);
+  const remove = useDeleteTask(task.project_uuid);
+  const restore = useRestoreTask(task.project_uuid);
   const { undoToast, toast } = useToast();
   const canEdit = user && user.role !== 'guest';
 
@@ -115,7 +115,7 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
             attachments={task.attachments ?? []}
             parentType="task"
             parentId={task.id}
-            projectId={task.project_id}
+            projectKey={task.project_uuid}
             readOnly={!canEdit}
           />
         </section>

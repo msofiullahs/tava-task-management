@@ -10,7 +10,7 @@ import { format, parseISO } from 'date-fns';
 import clsx from 'clsx';
 
 interface ListViewProps {
-  projectId: number;
+  projectKey: string;
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
@@ -19,7 +19,7 @@ interface ListViewProps {
 }
 
 /** Spec §8 — table grouped by status. Group header = status + count. Inline status dropdown per row. */
-export function ListView({ projectId, statuses, tasks, onOpenTask, onAddInStatus }: ListViewProps) {
+export function ListView({ projectKey, statuses, tasks, onOpenTask, onAddInStatus }: ListViewProps) {
   const groups = useMemo(() => {
     const byStatus = new Map<number, Task[]>();
     statuses.forEach((s) => byStatus.set(s.id, []));
@@ -46,7 +46,7 @@ export function ListView({ projectId, statuses, tasks, onOpenTask, onAddInStatus
       {groups.map(({ status, items }) => (
         <Group
           key={status.id}
-          projectId={projectId}
+          projectKey={projectKey}
           status={status}
           statuses={statuses}
           tasks={items}
@@ -59,7 +59,7 @@ export function ListView({ projectId, statuses, tasks, onOpenTask, onAddInStatus
 }
 
 interface GroupProps {
-  projectId: number;
+  projectKey: string;
   status: Status;
   statuses: Status[];
   tasks: Task[];
@@ -67,9 +67,9 @@ interface GroupProps {
   onAddTask?: (statusId: number) => void;
 }
 
-function Group({ projectId, status, statuses, tasks, onOpenTask, onAddTask }: GroupProps) {
+function Group({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: GroupProps) {
   const { data: user } = useCurrentUser();
-  const update = useUpdateTask(projectId);
+  const update = useUpdateTask(projectKey);
   const canEdit = user && user.role !== 'guest';
 
   return (

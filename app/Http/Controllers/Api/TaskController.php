@@ -24,7 +24,9 @@ class TaskController extends Controller
 
         $user = $request->user();
         $query = $project->tasks()
-            ->with(['assignees'])
+            // project:id,uuid is one row; eager-loading it lets TaskResource emit project_uuid
+            // so the SPA can invalidate the right project-scoped cache without prop-plumbing.
+            ->with(['assignees', 'project:id,uuid'])
             ->withCount('comments', 'attachments')
             ->orderBy('position');
 
@@ -70,7 +72,7 @@ class TaskController extends Controller
         });
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees', 'attachments.uploader')->loadCount('comments', 'attachments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid')->loadCount('comments', 'attachments')),
         ], 201);
     }
 
@@ -79,7 +81,7 @@ class TaskController extends Controller
         $this->authorize('view', $task);
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees', 'attachments.uploader')->loadCount('comments', 'attachments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid')->loadCount('comments', 'attachments')),
         ]);
     }
 

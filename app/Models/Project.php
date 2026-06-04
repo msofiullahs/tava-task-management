@@ -8,12 +8,32 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 #[Fillable(['name', 'description', 'position', 'created_by'])]
 class Project extends Model
 {
     /** @use HasFactory<\Database\Factories\ProjectFactory> */
     use HasFactory;
+
+    /**
+     * Route-model bind by uuid so the numeric primary key never appears in URLs.
+     * Internal FKs (tasks.project_id, project_user.project_id) still use the id —
+     * the uuid is only for things the user sees.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $project) {
+            if (empty($project->uuid)) {
+                $project->uuid = (string) Str::uuid();
+            }
+        });
+    }
 
     /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo

@@ -97,9 +97,9 @@ export function FilesPage() {
                     </div>
                   </td>
                   <td className="hidden px-3 py-2 md:table-cell">
-                    {f.source?.project_id && f.source?.task_id ? (
+                    {f.source?.project_uuid && f.source?.task_id ? (
                       <Link
-                        to={`/projects/${f.source.project_id}`}
+                        to={`/projects/${f.source.project_uuid}`}
                         className="text-indigo-600 hover:underline dark:text-indigo-400"
                         title="Open the project"
                       >

@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import http from '../lib/axios';
+import type { ProjectKey } from './projects';
 import type { Attachment } from '../types';
 
 interface UploadArgs {
   file: File;
   attachable_type: 'task' | 'comment';
   attachable_id: number;
-  /** Project id of the parent task — only needed so the right tasks query gets invalidated. */
-  projectId?: number;
+  /** Uuid of the parent task's project — only needed so the right tasks query gets invalidated. */
+  projectKey?: ProjectKey;
 }
 
 /** Global media browser (Files page). */
@@ -33,14 +34,8 @@ export function useUploadAttachment() {
     },
     onSuccess: (_att, vars) => {
       qc.invalidateQueries({ queryKey: ['attachments'] });
-      if (vars.attachable_type === 'comment') {
-        // CommentThread queries are keyed by task id, which we can derive from the attached comment.
-        // Refetching every comments list would be wasteful — invalidate based on the task.
-        // We don't know the taskId from upload args; the comments hook keys on task, so the
-        // wider invalidation below covers it.
-      }
-      if (vars.projectId) {
-        qc.invalidateQueries({ queryKey: ['projects', vars.projectId, 'tasks'] });
+      if (vars.projectKey) {
+        qc.invalidateQueries({ queryKey: ['projects', vars.projectKey, 'tasks'] });
       }
       // Comments are keyed by task id which we usually have via the page that triggered the upload.
       qc.invalidateQueries({ queryKey: ['tasks'] });

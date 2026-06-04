@@ -23,7 +23,7 @@ interface ProjectMembersModalProps {
  */
 export function ProjectMembersModal({ open, onClose, project }: ProjectMembersModalProps) {
   const { data: users = [] } = useUsers();
-  const update = useUpdateProjectMembers(project.id);
+  const update = useUpdateProjectMembers(project.uuid);
   const { toast } = useToast();
 
   const [selected, setSelected] = useState<Set<number>>(new Set());

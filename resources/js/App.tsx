@@ -51,7 +51,7 @@ export function App() {
         }
       />
       <Route
-        path="/projects/:id"
+        path="/projects/:projectKey"
         element={
           <RequireAuth>
             <AppShell><ProjectPage /></AppShell>

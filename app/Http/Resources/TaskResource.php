@@ -13,6 +13,9 @@ class TaskResource extends JsonResource
         return [
             'id' => $this->id,
             'project_id' => $this->project_id,
+            // Tasks are routinely shown outside their project context (drag, file lists,
+            // detail panel) and need to invalidate the right project-scoped cache.
+            'project_uuid' => $this->whenLoaded('project', fn () => $this->project->uuid),
             'status_id' => $this->status_id,
             'parent_id' => $this->parent_id,
             'title' => $this->title,

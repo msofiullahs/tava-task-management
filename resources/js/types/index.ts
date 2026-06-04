@@ -31,6 +31,8 @@ export interface Status {
 
 export interface Project {
   id: number;
+  /** Public identifier — used in URLs so the numeric primary key never leaks. */
+  uuid: string;
   name: string;
   description: string | null;
   position: string;
@@ -48,6 +50,8 @@ export interface Project {
 export interface Task {
   id: number;
   project_id: number;
+  /** Project's public identifier — embedded so detached views (modals, drag) can resolve it. */
+  project_uuid: string;
   status_id: number;
   parent_id: number | null;
   title: string;
@@ -85,7 +89,12 @@ export interface Attachment {
   attachable_type: 'task' | 'comment' | 'unknown';
   attachable_id: number;
   /** Set on the global Files-page payload; null on per-task/comment embedded attachments. */
-  source: { label: string; project_id: number | null; task_id: number | null } | null;
+  source: {
+    label: string;
+    project_id: number | null;
+    project_uuid: string | null;
+    task_id: number | null;
+  } | null;
 }
 
 export interface PasswordResetRequestRow {

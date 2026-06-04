@@ -40,7 +40,7 @@ class AttachmentResource extends JsonResource
         };
     }
 
-    /** @return array{label: string, project_id: int|null, task_id: int|null}|null */
+    /** @return array{label: string, project_id: int|null, project_uuid: string|null, task_id: int|null}|null */
     private function resolveSource(): ?array
     {
         if (! $this->relationLoaded('attachable')) {
@@ -48,10 +48,20 @@ class AttachmentResource extends JsonResource
         }
         $parent = $this->attachable;
         if ($parent instanceof Task) {
-            return ['label' => $parent->title, 'project_id' => $parent->project_id, 'task_id' => $parent->id];
+            return [
+                'label' => $parent->title,
+                'project_id' => $parent->project_id,
+                'project_uuid' => $parent->project?->uuid,
+                'task_id' => $parent->id,
+            ];
         }
         if ($parent instanceof Comment) {
-            return ['label' => 'Comment on '.$parent->task?->title, 'project_id' => $parent->task?->project_id, 'task_id' => $parent->task_id];
+            return [
+                'label' => 'Comment on '.$parent->task?->title,
+                'project_id' => $parent->task?->project_id,
+                'project_uuid' => $parent->task?->project?->uuid,
+                'task_id' => $parent->task_id,
+            ];
         }
 
         return null;

@@ -100,7 +100,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {projects.map((p) => (
             <NavLink
               key={p.id}
-              to={`/projects/${p.id}`}
+              to={`/projects/${p.uuid}`}
               className={({ isActive }) =>
                 clsx(
                   'truncate rounded-md px-3 py-1.5 text-sm',

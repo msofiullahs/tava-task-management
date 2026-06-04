@@ -11,8 +11,8 @@ interface AttachmentListProps {
   /** Where new uploads attach to. */
   parentType: 'task' | 'comment';
   parentId: number;
-  /** Project id — used purely for cache invalidation after upload/delete. */
-  projectId?: number;
+  /** Project uuid — used purely for cache invalidation after upload/delete. */
+  projectKey?: string;
   /** Hide the uploader (e.g. for read-only Viewers). */
   readOnly?: boolean;
   /** Compact = comment-thread variant (smaller, fewer affordances). */
@@ -20,7 +20,7 @@ interface AttachmentListProps {
 }
 
 export function AttachmentList({
-  attachments, parentType, parentId, projectId, readOnly, compact,
+  attachments, parentType, parentId, projectKey, readOnly, compact,
 }: AttachmentListProps) {
   const { data: me } = useCurrentUser();
   const upload = useUploadAttachment();
@@ -35,7 +35,7 @@ export function AttachmentList({
     if (!files) return;
     for (const file of Array.from(files)) {
       upload.mutate(
-        { file, attachable_type: parentType, attachable_id: parentId, projectId },
+        { file, attachable_type: parentType, attachable_id: parentId, projectKey },
         { onError: (err) => toast({ message: humanError(err), tone: 'error' }) },
       );
     }

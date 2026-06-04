@@ -27,13 +27,13 @@ const VIEWS: { key: ViewKey; label: string }[] = [
 ];
 
 export function ProjectPage() {
-  const { id } = useParams<{ id: string }>();
-  const projectId = id ? Number(id) : undefined;
+  // URL is /projects/:projectKey — the param is the project's uuid (route-bound on the API too).
+  const { projectKey } = useParams<{ projectKey: string }>();
   const navigate = useNavigate();
   const { data: user } = useCurrentUser();
-  const { data: project, isLoading: projectLoading } = useProject(projectId);
-  const { data: statuses = [] } = useStatuses(projectId);
-  const { data: tasks = [], isLoading: tasksLoading } = useTasks(projectId);
+  const { data: project, isLoading: projectLoading } = useProject(projectKey);
+  const { data: statuses = [] } = useStatuses(projectKey);
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks(projectKey);
   const deleteProject = useDeleteProject();
   const { toast } = useToast();
 
@@ -45,7 +45,7 @@ export function ProjectPage() {
   const [membersOpen, setMembersOpen] = useState(false);
   const canCreateTask = !!user && user.role !== 'guest';
 
-  if (!projectId) return null;
+  if (!projectKey) return null;
   if (projectLoading) return <div className="p-8 text-sm text-slate-500">Loading…</div>;
   if (!project) return (
     <div className="p-8">
@@ -113,7 +113,7 @@ export function ProjectPage() {
           <div className="p-8 text-sm text-slate-500">Loading tasks…</div>
         ) : view === 'list' ? (
           <ListView
-            projectId={projectId}
+            projectKey={projectKey}
             statuses={statuses}
             tasks={tasks}
             onOpenTask={setOpenTask}
@@ -121,7 +121,7 @@ export function ProjectPage() {
           />
         ) : view === 'board' ? (
           <BoardView
-            projectId={projectId}
+            projectKey={projectKey}
             statuses={statuses}
             tasks={tasks}
             onOpenTask={setOpenTask}
@@ -142,7 +142,7 @@ export function ProjectPage() {
         <NewTaskModal
           open
           onClose={() => setNewTaskSeed(null)}
-          projectId={projectId}
+          projectKey={projectKey}
           statuses={statuses}
           initialDueDate={newTaskSeed.dueDate ?? null}
           initialStatusId={newTaskSeed.statusId}
@@ -165,7 +165,7 @@ export function ProjectPage() {
         destructive
         busy={deleteProject.isPending}
         onCancel={() => setConfirmDelete(false)}
-        onConfirm={() => deleteProject.mutate(projectId, {
+        onConfirm={() => deleteProject.mutate(projectKey, {
           onSuccess: () => { setConfirmDelete(false); navigate('/'); },
           onError: (err) => toast({ message: humanError(err), tone: 'error' }),
         })}

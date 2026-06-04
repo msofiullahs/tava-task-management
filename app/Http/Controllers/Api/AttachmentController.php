@@ -7,6 +7,7 @@ use App\Http\Requests\UploadAttachmentRequest;
 use App\Http\Resources\AttachmentResource;
 use App\Models\Attachment;
 use App\Models\Comment;
+use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -22,12 +23,16 @@ class AttachmentController extends Controller
     {
         $this->authorize('viewAny', Attachment::class);
 
-        // attachable is polymorphic — Comment needs its parent task loaded so AttachmentResource
-        // can show the source label. Task is already its own source, so no nested load.
+        // attachable is polymorphic — Comment needs its parent task + project loaded so
+        // AttachmentResource can show the source label and project_uuid for the link.
+        // Task only needs its project.
         $items = Attachment::query()
             ->with([
                 'uploader',
-                'attachable' => fn ($morphTo) => $morphTo->morphWith([Comment::class => ['task']]),
+                'attachable' => fn ($morphTo) => $morphTo->morphWith([
+                    Task::class => ['project:id,uuid'],
+                    Comment::class => ['task.project:id,uuid'],
+                ]),
             ])
             ->latest()
             ->limit(500)
@@ -60,7 +65,10 @@ class AttachmentController extends Controller
             'attachment' => new AttachmentResource(
                 $attachment->load([
                     'uploader',
-                    'attachable' => fn ($morphTo) => $morphTo->morphWith([Comment::class => ['task']]),
+                    'attachable' => fn ($morphTo) => $morphTo->morphWith([
+                        Task::class => ['project:id,uuid'],
+                        Comment::class => ['task.project:id,uuid'],
+                    ]),
                 ]),
             ),
         ], 201);

@@ -18,7 +18,7 @@ import { format, parseISO } from 'date-fns';
 import type { Status, Task } from '../types';
 
 interface BoardViewProps {
-  projectId: number;
+  projectKey: string;
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
@@ -27,10 +27,10 @@ interface BoardViewProps {
 }
 
 /** Spec §8 — Kanban via @dnd-kit. Cards re-order/move statuses by drag; "Move to…" menu mirrors it. */
-export function BoardView({ projectId, statuses, tasks, onOpenTask, onAddInStatus }: BoardViewProps) {
+export function BoardView({ projectKey, statuses, tasks, onOpenTask, onAddInStatus }: BoardViewProps) {
   const { data: user } = useCurrentUser();
-  const move = useMoveTask(projectId);
-  const createStatus = useCreateStatus(projectId);
+  const move = useMoveTask(projectKey);
+  const createStatus = useCreateStatus(projectKey);
   const { toast } = useToast();
   const [activeTaskId, setActiveTaskId] = useState<number | null>(null);
   const [newColumn, setNewColumn] = useState('');
@@ -106,7 +106,7 @@ export function BoardView({ projectId, statuses, tasks, onOpenTask, onAddInStatu
           {grouped.map(({ status, items }) => (
             <Column
               key={status.id}
-              projectId={projectId}
+              projectKey={projectKey}
               status={status}
               statuses={statuses}
               tasks={items}
@@ -135,7 +135,7 @@ export function BoardView({ projectId, statuses, tasks, onOpenTask, onAddInStatu
 }
 
 interface ColumnProps {
-  projectId: number;
+  projectKey: string;
   status: Status;
   statuses: Status[];
   tasks: Task[];
@@ -143,10 +143,10 @@ interface ColumnProps {
   onAddTask?: (statusId: number) => void;
 }
 
-function Column({ projectId, status, statuses, tasks, onOpenTask, onAddTask }: ColumnProps) {
+function Column({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: ColumnProps) {
   const { data: user } = useCurrentUser();
-  const updateStatus = useUpdateStatus(projectId);
-  const deleteStatus = useDeleteStatus(projectId);
+  const updateStatus = useUpdateStatus(projectKey);
+  const deleteStatus = useDeleteStatus(projectKey);
   const { toast } = useToast();
   const canEdit = user && user.role !== 'guest';
   const [renaming, setRenaming] = useState(false);
@@ -263,7 +263,7 @@ interface TaskCardProps {
 
 function TaskCard({ task, statuses, onOpen, dragging }: TaskCardProps) {
   const { data: user } = useCurrentUser();
-  const move = useMoveTask(task.project_id);
+  const move = useMoveTask(task.project_uuid);
   const [menuOpen, setMenuOpen] = useState(false);
   const canEdit = user && user.role !== 'guest';
 

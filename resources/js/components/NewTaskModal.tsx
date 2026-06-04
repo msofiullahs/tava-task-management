@@ -14,7 +14,7 @@ import type { Priority, Status } from '../types';
 interface NewTaskModalProps {
   open: boolean;
   onClose: () => void;
-  projectId: number;
+  projectKey: string;
   statuses: Status[];
   /** Optional defaults — used by Calendar's date-cell click and per-column "+" buttons. */
   initialStatusId?: number;
@@ -27,9 +27,9 @@ interface NewTaskModalProps {
  * to type into) and for tasks that need detail at creation time.
  */
 export function NewTaskModal({
-  open, onClose, projectId, statuses, initialStatusId, initialDueDate = null,
+  open, onClose, projectKey, statuses, initialStatusId, initialDueDate = null,
 }: NewTaskModalProps) {
-  const create = useCreateTask(projectId);
+  const create = useCreateTask(projectKey);
   const { toast } = useToast();
 
   const defaultStatusId = initialStatusId
