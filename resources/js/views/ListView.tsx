@@ -1,10 +1,9 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
-import { useCreateTask, useUpdateTask } from '../api/tasks';
+import { useMemo } from 'react';
+import { useUpdateTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
-import { humanError } from '../lib/errors';
-import { useToast } from '../lib/toast';
 import { Avatar } from '../components/Avatar';
 import { PriorityBadge } from '../components/PriorityPicker';
+import { StatusSelect } from '../components/StatusSelect';
 import { EmptyState } from '../components/EmptyState';
 import type { Status, Task } from '../types';
 import { format, parseISO } from 'date-fns';
@@ -15,10 +14,12 @@ interface ListViewProps {
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
+  /** When provided, the per-group "+ Add a task" button fires this with the group's status id. */
+  onAddInStatus?: (statusId: number) => void;
 }
 
 /** Spec §8 — table grouped by status. Group header = status + count. Inline status dropdown per row. */
-export function ListView({ projectId, statuses, tasks, onOpenTask }: ListViewProps) {
+export function ListView({ projectId, statuses, tasks, onOpenTask, onAddInStatus }: ListViewProps) {
   const groups = useMemo(() => {
     const byStatus = new Map<number, Task[]>();
     statuses.forEach((s) => byStatus.set(s.id, []));
@@ -48,6 +49,7 @@ export function ListView({ projectId, statuses, tasks, onOpenTask }: ListViewPro
           statuses={statuses}
           tasks={items}
           onOpenTask={onOpenTask}
+          onAddTask={onAddInStatus}
         />
       ))}
     </div>
@@ -60,24 +62,13 @@ interface GroupProps {
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
+  onAddTask?: (statusId: number) => void;
 }
 
-function Group({ projectId, status, statuses, tasks, onOpenTask }: GroupProps) {
+function Group({ projectId, status, statuses, tasks, onOpenTask, onAddTask }: GroupProps) {
   const { data: user } = useCurrentUser();
-  const create = useCreateTask(projectId);
   const update = useUpdateTask(projectId);
-  const { toast } = useToast();
   const canEdit = user && user.role !== 'guest';
-  const [quickTitle, setQuickTitle] = useState('');
-
-  const onQuickAdd = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter' || !quickTitle.trim()) return;
-    const title = quickTitle.trim();
-    setQuickTitle('');
-    create.mutate({ title, status_id: status.id }, {
-      onError: (err) => toast({ message: humanError(err), tone: 'error' }),
-    });
-  };
 
   return (
     <section>
@@ -115,14 +106,14 @@ function Group({ projectId, status, statuses, tasks, onOpenTask }: GroupProps) {
                   </div>
                 </td>
                 <td className="hidden px-3 py-2 md:table-cell" onClick={(e) => e.stopPropagation()}>
-                  <select
-                    disabled={!canEdit}
+                  <StatusSelect
                     value={t.status_id}
-                    onChange={(e) => update.mutate({ id: t.id, status_id: Number(e.target.value) })}
-                    className="rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-slate-700 hover:border-slate-300 dark:text-slate-200 dark:hover:border-slate-700"
-                  >
-                    {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                    statuses={statuses}
+                    disabled={!canEdit}
+                    compact
+                    onChange={(statusId) => update.mutate({ id: t.id, status_id: statusId })}
+                    className="w-36"
+                  />
                 </td>
                 <td className="hidden px-3 py-2 md:table-cell"><PriorityBadge value={t.priority} /></td>
                 <td className={clsx('hidden px-3 py-2 text-xs lg:table-cell', isOverdue(t.due_date) ? 'text-rose-600' : 'text-slate-500')}>
@@ -135,16 +126,16 @@ function Group({ projectId, status, statuses, tasks, onOpenTask }: GroupProps) {
                 </td>
               </tr>
             ))}
-            {canEdit && (
+            {canEdit && onAddTask && (
               <tr className="border-t border-slate-100 dark:border-slate-800">
-                <td colSpan={5} className="px-3 py-2">
-                  <input
-                    value={quickTitle}
-                    onChange={(e) => setQuickTitle(e.target.value)}
-                    onKeyDown={onQuickAdd}
-                    placeholder="+ Add a task…"
-                    className="w-full bg-transparent text-sm text-slate-700 placeholder-slate-400 outline-none dark:text-slate-200"
-                  />
+                <td colSpan={5} className="p-0">
+                  <button
+                    type="button"
+                    onClick={() => onAddTask(status.id)}
+                    className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-sm font-medium text-slate-500 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+                  >
+                    <span aria-hidden className="text-base leading-none">+</span> Add a task
+                  </button>
                 </td>
               </tr>
             )}

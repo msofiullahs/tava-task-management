@@ -72,6 +72,17 @@ class User extends Authenticatable
         return $this->belongsToMany(Task::class, 'task_user');
     }
 
+    /**
+     * Projects this user has been explicitly added to. Only meaningful for
+     * restricted projects — admins/members see open projects regardless.
+     *
+     * @return BelongsToMany<Project, $this>
+     */
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_user');
+    }
+
     /** @return HasMany<Comment, $this> */
     public function comments(): HasMany
     {

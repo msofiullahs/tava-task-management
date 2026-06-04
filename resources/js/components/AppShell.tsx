@@ -4,6 +4,7 @@ import { useCurrentUser, useLogout } from '../api/auth';
 import { useProjects } from '../api/projects';
 import { ThemeToggle } from './ThemeToggle';
 import { Avatar } from './Avatar';
+import { Logo } from './Logo';
 import { ROLE_LABELS } from '../types';
 import clsx from 'clsx';
 
@@ -41,8 +42,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       >
         <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4 dark:border-slate-800">
-          <Link to="/" className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-            Tava
+          <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <Logo className="h-7 w-7" />
+            <span>Tava</span>
           </Link>
         </div>
         <nav className="flex flex-col gap-1 p-3">
@@ -60,6 +62,21 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             Projects
           </NavLink>
+          {user.role !== 'guest' && (
+            <NavLink
+              to="/files"
+              className={({ isActive }) =>
+                clsx(
+                  'rounded-md px-3 py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
+                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                )
+              }
+            >
+              Files
+            </NavLink>
+          )}
           {user.role === 'admin' && (
             <NavLink
               to="/people"

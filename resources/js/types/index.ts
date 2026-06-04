@@ -39,6 +39,10 @@ export interface Project {
   updated_at: string;
   statuses?: Status[];
   task_count?: number;
+  members?: UserSummary[];
+  member_count?: number;
+  /** True iff the project is restricted (at least one explicit member set). */
+  is_restricted?: boolean;
 }
 
 export interface Task {
@@ -56,6 +60,8 @@ export interface Task {
   updated_at: string;
   assignees?: UserSummary[];
   comment_count?: number;
+  attachment_count?: number;
+  attachments?: Attachment[];
 }
 
 export interface Comment {
@@ -63,6 +69,29 @@ export interface Comment {
   task_id: number;
   body: string;
   user: UserSummary;
+  attachments?: Attachment[];
+  created_at: string;
+}
+
+export interface Attachment {
+  id: number;
+  original_name: string;
+  mime_type: string;
+  size_bytes: number;
+  is_image: boolean;
+  url: string;
+  created_at: string;
+  uploader?: UserSummary;
+  attachable_type: 'task' | 'comment' | 'unknown';
+  attachable_id: number;
+  /** Set on the global Files-page payload; null on per-task/comment embedded attachments. */
+  source: { label: string; project_id: number | null; task_id: number | null } | null;
+}
+
+export interface PasswordResetRequestRow {
+  id: number;
+  email: string;
+  user: { id: number; name: string; role: Role } | null;
   created_at: string;
 }
 
@@ -85,4 +114,12 @@ export const PRIORITY_COLORS: Record<Priority, string> = {
   high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
   normal: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   low: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+};
+
+/** Solid swatch hex per priority — used by the coloured Select dot. */
+export const PRIORITY_DOT: Record<Priority, string> = {
+  urgent: '#e11d48',
+  high: '#f59e0b',
+  normal: '#64748b',
+  low: '#94a3b8',
 };

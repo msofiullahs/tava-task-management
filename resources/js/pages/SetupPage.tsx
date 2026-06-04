@@ -4,6 +4,7 @@ import { useSetup } from '../api/auth';
 import { humanError } from '../lib/errors';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { Logo } from '../components/Logo';
 
 /** Spec §5 — first-run wizard. Replaces the login form when zero users exist. */
 export function SetupPage() {
@@ -31,7 +32,8 @@ export function SetupPage() {
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo className="mb-4 h-12 w-12" />
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Welcome to Tava</h1>
           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Let's create your admin account. You can add teammates from inside the app.

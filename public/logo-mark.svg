@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-label="Tava">
+  <rect width="32" height="32" rx="8" fill="url(#tava-grad)"/>
+  <!-- Crossbar -->
+  <rect x="6" y="8.5" width="20" height="4.5" rx="2.25" fill="#fff"/>
+  <!-- Stem -->
+  <rect x="13.75" y="8.5" width="4.5" height="16.5" rx="2.25" fill="#fff"/>
+  <!-- Subtle accent dot at the right end of the crossbar — reads as motion / completion -->
+  <circle cx="23.25" cy="10.75" r="1.25" fill="#a5b4fc"/>
+  <defs>
+    <linearGradient id="tava-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+</svg>

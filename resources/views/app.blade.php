@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Tava') }}</title>
+    <link rel="icon" type="image/svg+xml" href="/logo-mark.svg">
+    <meta name="theme-color" content="#4338ca">
 
     {{-- Anti-FOUC: pick the theme BEFORE React mounts so we never flash the wrong palette. --}}
     <script>

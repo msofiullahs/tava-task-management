@@ -25,7 +25,7 @@ class TaskController extends Controller
         $user = $request->user();
         $query = $project->tasks()
             ->with(['assignees'])
-            ->withCount('comments')
+            ->withCount('comments', 'attachments')
             ->orderBy('position');
 
         if ($user->isViewer()) {
@@ -70,7 +70,7 @@ class TaskController extends Controller
         });
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees')->loadCount('comments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader')->loadCount('comments', 'attachments')),
         ], 201);
     }
 
@@ -79,7 +79,7 @@ class TaskController extends Controller
         $this->authorize('view', $task);
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees')->loadCount('comments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader')->loadCount('comments', 'attachments')),
         ]);
     }
 

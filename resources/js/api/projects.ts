@@ -48,3 +48,15 @@ export function useDeleteProject() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   });
 }
+
+export function useUpdateProjectMembers(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (user_ids: number[]) =>
+      (await http.patch<{ project: Project }>(`/projects/${projectId}/members`, { user_ids })).data.project,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['projects', projectId] });
+    },
+  });
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="currentColor" aria-label="Tava">
+  <!-- Single-color variant — inherits `color` from its parent so it works inside
+       buttons, on coloured chrome, and against either light or dark backgrounds. -->
+  <rect x="6" y="8.5" width="20" height="4.5" rx="2.25"/>
+  <rect x="13.75" y="8.5" width="4.5" height="16.5" rx="2.25"/>
+</svg>

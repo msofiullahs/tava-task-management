@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
-            $table->morphs('tokenable');
+            // Hand-rolled morphs with a shorter type column. Default morphs() would
+            // create VARCHAR(191) under our 191 cap, and a composite index on
+            // (191 × 4 bytes utf8mb4) + bigint = 772 bytes — over InnoDB Antelope's
+            // 767-byte limit on older Plesk MariaDB. 100 chars is plenty for class names.
+            $table->string('tokenable_type', 100);
+            $table->unsignedBigInteger('tokenable_id');
+            $table->index(['tokenable_type', 'tokenable_id'], 'personal_access_tokens_tokenable_index');
             $table->text('name');
             $table->string('token', 64)->unique();
             $table->text('abilities')->nullable();

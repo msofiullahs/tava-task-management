@@ -17,7 +17,9 @@ class CommentController extends Controller
     {
         $this->authorize('viewAny', [Comment::class, $task]);
 
-        return CommentResource::collection($task->comments()->with('user')->get());
+        return CommentResource::collection(
+            $task->comments()->with(['user', 'attachments.uploader'])->get(),
+        );
     }
 
     public function store(StoreCommentRequest $request, Task $task): JsonResponse
@@ -28,7 +30,7 @@ class CommentController extends Controller
         ]);
 
         return response()->json([
-            'comment' => new CommentResource($comment->load('user')),
+            'comment' => new CommentResource($comment->load(['user', 'attachments.uploader'])),
         ], 201);
     }
 

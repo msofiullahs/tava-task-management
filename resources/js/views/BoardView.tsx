@@ -7,7 +7,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
 import { useCreateStatus, useDeleteStatus, useUpdateStatus } from '../api/statuses';
-import { useCreateTask, useMoveTask } from '../api/tasks';
+import { useMoveTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
 import { Avatar } from '../components/Avatar';
 import { PriorityBadge } from '../components/PriorityPicker';
@@ -22,10 +22,12 @@ interface BoardViewProps {
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
+  /** When provided, the per-column "+ Add task" button opens the parent's NewTaskModal. */
+  onAddInStatus?: (statusId: number) => void;
 }
 
 /** Spec §8 — Kanban via @dnd-kit. Cards re-order/move statuses by drag; "Move to…" menu mirrors it. */
-export function BoardView({ projectId, statuses, tasks, onOpenTask }: BoardViewProps) {
+export function BoardView({ projectId, statuses, tasks, onOpenTask, onAddInStatus }: BoardViewProps) {
   const { data: user } = useCurrentUser();
   const move = useMoveTask(projectId);
   const createStatus = useCreateStatus(projectId);
@@ -109,6 +111,7 @@ export function BoardView({ projectId, statuses, tasks, onOpenTask }: BoardViewP
               statuses={statuses}
               tasks={items}
               onOpenTask={onOpenTask}
+              onAddTask={onAddInStatus}
             />
           ))}
           {canEdit && (
@@ -137,26 +140,17 @@ interface ColumnProps {
   statuses: Status[];
   tasks: Task[];
   onOpenTask: (task: Task) => void;
+  onAddTask?: (statusId: number) => void;
 }
 
-function Column({ projectId, status, statuses, tasks, onOpenTask }: ColumnProps) {
+function Column({ projectId, status, statuses, tasks, onOpenTask, onAddTask }: ColumnProps) {
   const { data: user } = useCurrentUser();
-  const create = useCreateTask(projectId);
   const updateStatus = useUpdateStatus(projectId);
   const deleteStatus = useDeleteStatus(projectId);
   const { toast } = useToast();
   const canEdit = user && user.role !== 'guest';
-  const [quickTitle, setQuickTitle] = useState('');
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(status.name);
-
-  const onQuickAdd = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== 'Enter' || !quickTitle.trim()) return;
-    create.mutate({ title: quickTitle.trim(), status_id: status.id }, {
-      onSuccess: () => setQuickTitle(''),
-      onError: (err) => toast({ message: humanError(err), tone: 'error' }),
-    });
-  };
 
   const onDelete = () => {
     const others = statuses.filter((s) => s.id !== status.id);
@@ -229,15 +223,20 @@ function Column({ projectId, status, statuses, tasks, onOpenTask }: ColumnProps)
         </SortableContext>
       </div>
 
-      {canEdit && (
+      {canEdit && onAddTask && (
         <div className="border-t border-slate-200/60 p-2 dark:border-slate-700/60">
-          <input
-            value={quickTitle}
-            onChange={(e) => setQuickTitle(e.target.value)}
-            onKeyDown={onQuickAdd}
-            placeholder="+ Add a task…"
-            className="w-full rounded-md bg-white px-2 py-1.5 text-sm placeholder-slate-400 outline-none focus:ring-1 focus:ring-indigo-500 dark:bg-slate-900 dark:text-slate-200"
-          />
+          <button
+            type="button"
+            onClick={() => onAddTask(status.id)}
+            className={clsx(
+              'flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium',
+              'text-slate-500 transition hover:bg-white hover:text-indigo-600',
+              'dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-indigo-300',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+            )}
+          >
+            <span aria-hidden className="text-base leading-none">+</span> Add a task
+          </button>
         </div>
       )}
     </div>

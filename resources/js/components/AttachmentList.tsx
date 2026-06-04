@@ -1,0 +1,214 @@
+import { useRef, useState, type DragEvent } from 'react';
+import clsx from 'clsx';
+import { useDeleteAttachment, useUploadAttachment } from '../api/attachments';
+import { useCurrentUser } from '../api/auth';
+import { useToast } from '../lib/toast';
+import { humanError } from '../lib/errors';
+import type { Attachment } from '../types';
+
+interface AttachmentListProps {
+  attachments: Attachment[];
+  /** Where new uploads attach to. */
+  parentType: 'task' | 'comment';
+  parentId: number;
+  /** Project id — used purely for cache invalidation after upload/delete. */
+  projectId?: number;
+  /** Hide the uploader (e.g. for read-only Viewers). */
+  readOnly?: boolean;
+  /** Compact = comment-thread variant (smaller, fewer affordances). */
+  compact?: boolean;
+}
+
+export function AttachmentList({
+  attachments, parentType, parentId, projectId, readOnly, compact,
+}: AttachmentListProps) {
+  const { data: me } = useCurrentUser();
+  const upload = useUploadAttachment();
+  const remove = useDeleteAttachment();
+  const { toast } = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const allowUpload = !readOnly;
+
+  const onFiles = (files: FileList | null) => {
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      upload.mutate(
+        { file, attachable_type: parentType, attachable_id: parentId, projectId },
+        { onError: (err) => toast({ message: humanError(err), tone: 'error' }) },
+      );
+    }
+  };
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (!allowUpload) return;
+    onFiles(e.dataTransfer.files);
+  };
+
+  const onCopyLink = async (att: Attachment) => {
+    try {
+      await navigator.clipboard.writeText(att.url);
+      toast({ message: 'Link copied.', tone: 'success' });
+    } catch {
+      toast({ message: 'Couldn\'t copy automatically. Right-click the file to copy its address.', tone: 'error' });
+    }
+  };
+
+  return (
+    <div
+      onDragOver={(e) => { if (allowUpload) { e.preventDefault(); setDragOver(true); } }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={onDrop}
+      className={clsx(
+        'rounded-lg',
+        dragOver && 'ring-2 ring-indigo-400',
+      )}
+    >
+      {attachments.length > 0 && (
+        <ul className={clsx('grid gap-2', compact ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3')}>
+          {attachments.map((att) => (
+            <li key={att.id}>
+              <AttachmentTile
+                att={att}
+                compact={!!compact}
+                canDelete={!!me && (me.role === 'admin' || att.uploader?.id === me.id)}
+                onCopy={() => onCopyLink(att)}
+                onDelete={() => remove.mutate(att.id)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {allowUpload && (
+        <div className={clsx('mt-2 flex items-center gap-2', attachments.length === 0 && 'mt-0')}>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => { onFiles(e.target.files); e.target.value = ''; }}
+          />
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            className={clsx(
+              'inline-flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600',
+              'hover:border-indigo-400 hover:text-indigo-600',
+              'dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-500 dark:hover:text-indigo-300',
+            )}
+          >
+            <PaperclipIcon /> {upload.isPending ? 'Uploading…' : compact ? 'Attach file' : 'Attach files'}
+          </button>
+          {!compact && <span className="text-xs text-slate-400">…or drop them here</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface TileProps {
+  att: Attachment;
+  compact: boolean;
+  canDelete: boolean;
+  onCopy: () => void;
+  onDelete: () => void;
+}
+
+function AttachmentTile({ att, compact, canDelete, onCopy, onDelete }: TileProps) {
+  const sizeLabel = formatBytes(att.size_bytes);
+
+  return (
+    <div className={clsx(
+      'group relative flex overflow-hidden rounded-md border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900',
+      compact ? 'p-2' : 'flex-col',
+    )}>
+      {att.is_image ? (
+        <a href={att.url} target="_blank" rel="noreferrer" className={clsx(compact ? 'h-12 w-12 shrink-0' : 'block aspect-video w-full')}>
+          <img src={att.url} alt={att.original_name} className="h-full w-full object-cover" />
+        </a>
+      ) : (
+        <a
+          href={att.url}
+          target="_blank"
+          rel="noreferrer"
+          className={clsx(
+            'flex items-center justify-center bg-slate-50 text-slate-400 dark:bg-slate-800',
+            compact ? 'h-12 w-12 shrink-0' : 'aspect-video w-full',
+          )}
+        >
+          <FileIcon />
+        </a>
+      )}
+
+      <div className={clsx('flex min-w-0 flex-1 flex-col justify-between gap-1 p-2', compact && 'pl-3')}>
+        <a
+          href={att.url}
+          target="_blank"
+          rel="noreferrer"
+          className="truncate text-xs font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-200 dark:hover:text-indigo-300"
+          title={att.original_name}
+        >
+          {att.original_name}
+        </a>
+        <div className="flex items-center justify-between text-[10px] text-slate-400">
+          <span>{sizeLabel}</span>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={onCopy}
+              className="rounded p-1 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              title="Copy link"
+            >
+              <LinkIcon />
+            </button>
+            {canDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded p-1 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30"
+                title="Remove"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function PaperclipIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M13.5 6.5 7.4 12.6a2 2 0 0 0 2.8 2.8l6.1-6.1a4 4 0 0 0-5.7-5.7L4.5 9.7a6 6 0 1 0 8.5 8.5l4.2-4.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function FileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5" />
+    </svg>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M8 12a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1.5 1.5M12 8a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1.5-1.5" strokeLinecap="round" />
+    </svg>
+  );
+}

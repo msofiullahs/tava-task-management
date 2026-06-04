@@ -15,6 +15,7 @@ class CommentResource extends JsonResource
             'task_id' => $this->task_id,
             'body' => $this->body,
             'user' => new UserSummaryResource($this->whenLoaded('user')),
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
             'created_at' => $this->created_at,
         ];
     }

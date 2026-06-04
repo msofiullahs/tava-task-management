@@ -1,30 +1,31 @@
 import clsx from 'clsx';
-import { PRIORITY_COLORS, PRIORITY_LABELS, type Priority } from '../types';
+import { Select, type SelectOption } from './Select';
+import { PRIORITY_COLORS, PRIORITY_DOT, PRIORITY_LABELS, type Priority } from '../types';
 
 interface PriorityPickerProps {
   value: Priority | null;
   onChange: (next: Priority | null) => void;
+  compact?: boolean;
 }
 
-const OPTIONS: (Priority | null)[] = [null, 'low', 'normal', 'high', 'urgent'];
+const OPTIONS: SelectOption<Priority | null>[] = [
+  { value: null, label: 'No priority' },
+  { value: 'low', label: PRIORITY_LABELS.low, color: PRIORITY_DOT.low },
+  { value: 'normal', label: PRIORITY_LABELS.normal, color: PRIORITY_DOT.normal },
+  { value: 'high', label: PRIORITY_LABELS.high, color: PRIORITY_DOT.high },
+  { value: 'urgent', label: PRIORITY_LABELS.urgent, color: PRIORITY_DOT.urgent },
+];
 
-/** Spec §9.3 — labelled coloured dropdown. The label is always present alongside the color (§9.9). */
-export function PriorityPicker({ value, onChange }: PriorityPickerProps) {
+/** Spec §9.3 — labelled coloured dropdown. Colour dots now show in the options list, not just text. */
+export function PriorityPicker({ value, onChange, compact }: PriorityPickerProps) {
   return (
-    <select
-      value={value ?? ''}
-      onChange={(e) => onChange((e.target.value || null) as Priority | null)}
-      className={clsx(
-        'rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-700',
-        'dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
-      )}
-    >
-      {OPTIONS.map((opt) => (
-        <option key={opt ?? 'none'} value={opt ?? ''}>
-          {opt ? `● ${PRIORITY_LABELS[opt]}` : 'No priority'}
-        </option>
-      ))}
-    </select>
+    <Select<Priority | null>
+      value={value}
+      options={OPTIONS}
+      onChange={onChange}
+      placeholder="No priority"
+      compact={compact}
+    />
   );
 }
 

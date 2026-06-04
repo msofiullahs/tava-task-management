@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useDeleteComment, useComments, useCreateComment } from '../api/comments';
+import { useUploadAttachment } from '../api/attachments';
 import { useDeleteTask, useRestoreTask, useUpdateTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
 import { Modal } from './Modal';
@@ -8,7 +9,9 @@ import { Button } from './Button';
 import { DatePicker } from './DatePicker';
 import { AssigneePicker } from './AssigneePicker';
 import { PriorityPicker } from './PriorityPicker';
+import { StatusSelect } from './StatusSelect';
 import { Avatar } from './Avatar';
+import { AttachmentList } from './AttachmentList';
 import { humanError } from '../lib/errors';
 import { useToast } from '../lib/toast';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
@@ -76,14 +79,12 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
         <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 p-4 dark:border-slate-800 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Status</label>
-            <select
-              disabled={!canEdit}
+            <StatusSelect
               value={statusId}
-              onChange={(e) => { const v = Number(e.target.value); setStatusId(v); save({ status_id: v }); }}
-              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            >
-              {statuses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+              statuses={statuses}
+              disabled={!canEdit}
+              onChange={(v) => { setStatusId(v); save({ status_id: v }); }}
+            />
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">Due date</label>
@@ -107,6 +108,17 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
           onChange={(e) => setDescription(e.target.value)}
           onBlur={() => { if (description !== (task.description ?? '')) save({ description: description || null }); }}
         />
+
+        <section>
+          <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Attachments</h3>
+          <AttachmentList
+            attachments={task.attachments ?? []}
+            parentType="task"
+            parentId={task.id}
+            projectId={task.project_id}
+            readOnly={!canEdit}
+          />
+        </section>
 
         <CommentThread taskId={task.id} />
 
@@ -155,15 +167,29 @@ function CommentThread({ taskId }: { taskId: number }) {
                 </span>
               </div>
               <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-100">{c.body}</p>
-              {(user?.role === 'admin' || user?.id === c.user.id) && (
-                <button
-                  type="button"
-                  onClick={() => remove.mutate(c.id)}
-                  className="mt-1 text-xs text-slate-400 hover:text-rose-600"
-                >
-                  Delete
-                </button>
+              {(c.attachments?.length ?? 0) > 0 && (
+                <div className="mt-2">
+                  <AttachmentList
+                    attachments={c.attachments ?? []}
+                    parentType="comment"
+                    parentId={c.id}
+                    readOnly
+                    compact
+                  />
+                </div>
               )}
+              <div className="mt-1 flex items-center gap-3 text-xs">
+                <AttachToComment commentId={c.id} />
+                {(user?.role === 'admin' || user?.id === c.user.id) && (
+                  <button
+                    type="button"
+                    onClick={() => remove.mutate(c.id)}
+                    className="text-slate-400 hover:text-rose-600"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </li>
         ))}
@@ -173,5 +199,45 @@ function CommentThread({ taskId }: { taskId: number }) {
         <Button type="submit" disabled={create.isPending || !body.trim()}>Post</Button>
       </form>
     </section>
+  );
+}
+
+/**
+ * Inline "Attach file" link beneath each posted comment. We don't add files to
+ * a draft comment because the backend needs the comment row to exist first;
+ * posting a quick comment then attaching is a small, friction-light flow.
+ */
+function AttachToComment({ commentId }: { commentId: number }) {
+  const upload = useUploadAttachment();
+  const { toast } = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const onFiles = (files: FileList | null) => {
+    if (!files) return;
+    for (const file of Array.from(files)) {
+      upload.mutate(
+        { file, attachable_type: 'comment', attachable_id: commentId },
+        { onError: (err) => toast({ message: humanError(err), tone: 'error' }) },
+      );
+    }
+  };
+
+  return (
+    <>
+      <input
+        ref={fileInput}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={(e) => { onFiles(e.target.files); e.target.value = ''; }}
+      />
+      <button
+        type="button"
+        onClick={() => fileInput.current?.click()}
+        className="text-slate-400 hover:text-indigo-600"
+      >
+        {upload.isPending ? 'Uploading…' : 'Attach file'}
+      </button>
+    </>
   );
 }

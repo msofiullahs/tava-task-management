@@ -25,6 +25,8 @@ class TaskResource extends JsonResource
             'updated_at' => $this->updated_at,
             'assignees' => UserSummaryResource::collection($this->whenLoaded('assignees')),
             'comment_count' => $this->when(isset($this->comments_count), fn () => (int) $this->comments_count),
+            'attachment_count' => $this->when(isset($this->attachments_count), fn () => (int) $this->attachments_count),
+            'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
         ];
     }
 }

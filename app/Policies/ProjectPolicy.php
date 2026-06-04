@@ -9,14 +9,25 @@ class ProjectPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true; // Viewers see the home list; their per-task filtering happens in TaskPolicy.
+        return true; // Index applies per-user filtering.
     }
 
     public function view(User $user, Project $project): bool
     {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // Restricted project: only the explicit members can see it.
+        if ($project->isRestricted() && ! $project->members()->whereKey($user->id)->exists()) {
+            return false;
+        }
+
         if ($user->isViewer()) {
-            // Viewers only see projects where they're assigned at least one task (spec §6).
-            return $project->tasks()->whereHas('assignees', fn ($q) => $q->whereKey($user->id))->exists();
+            // Viewer: must additionally have at least one assigned task in this project.
+            return $project->tasks()
+                ->whereHas('assignees', fn ($q) => $q->whereKey($user->id))
+                ->exists();
         }
 
         return true;
@@ -33,6 +44,12 @@ class ProjectPolicy
     }
 
     public function delete(User $user, Project $project): bool
+    {
+        return $user->isAdmin();
+    }
+
+    /** Only admins manage the member list. */
+    public function manageMembers(User $user, Project $project): bool
     {
         return $user->isAdmin();
     }

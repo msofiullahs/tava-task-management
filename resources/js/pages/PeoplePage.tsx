@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useCreateUser, useDeleteUser, useResetUserPassword, useUpdateUser, useUsers } from '../api/users';
+import { useDismissPasswordRequest, useFulfillPasswordRequest, usePasswordResetRequests } from '../api/password';
 import { useCurrentUser } from '../api/auth';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -23,6 +24,9 @@ export function PeoplePage() {
   const update = useUpdateUser();
   const reset = useResetUserPassword();
   const remove = useDeleteUser();
+  const { data: resetRequests = [] } = usePasswordResetRequests();
+  const fulfill = useFulfillPasswordRequest();
+  const dismiss = useDismissPasswordRequest();
   const { toast } = useToast();
 
   return (
@@ -34,6 +38,53 @@ export function PeoplePage() {
         </div>
         <Button onClick={() => setCreating(true)}>+ Add person</Button>
       </div>
+
+      {resetRequests.length > 0 && (
+        <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-900/20">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-white">{resetRequests.length}</span>
+            <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              {resetRequests.length === 1 ? 'Password reset request' : 'Password reset requests'}
+            </h2>
+          </div>
+          <ul className="divide-y divide-amber-200 dark:divide-amber-700/50">
+            {resetRequests.map((r) => (
+              <li key={r.id} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                    {r.user ? r.user.name : r.email}
+                    {!r.user && <span className="ml-2 text-xs text-amber-700">(no matching account)</span>}
+                  </div>
+                  <div className="text-xs text-amber-700 dark:text-amber-300">
+                    {r.email} · asked {new Date(r.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {r.user && (
+                    <Button
+                      size="sm"
+                      onClick={() => fulfill.mutate(r.id, {
+                        onSuccess: (data) => setTempCredential({ user: data.user, password: data.temp_password }),
+                        onError: (err) => toast({ message: humanError(err), tone: 'error' }),
+                      })}
+                      disabled={fulfill.isPending}
+                    >
+                      Reset & copy password
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => dismiss.mutate(r.id)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <table className="w-full text-sm">

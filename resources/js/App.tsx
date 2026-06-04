@@ -8,6 +8,8 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectPage } from './pages/ProjectPage';
 import { AccountPage } from './pages/AccountPage';
 import { PeoplePage } from './pages/PeoplePage';
+import { FilesPage } from './pages/FilesPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { AppShell } from './components/AppShell';
 
 export function App() {
@@ -31,6 +33,7 @@ export function App() {
     <Routes>
       <Route path="/setup" element={<SetupPage />} />
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/forgot-password" element={user ? <Navigate to="/" replace /> : <ForgotPasswordPage />} />
       <Route
         path="/change-password"
         element={
@@ -60,6 +63,14 @@ export function App() {
         element={
           <RequireAuth>
             <AppShell><AccountPage /></AppShell>
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/files"
+        element={
+          <RequireAuth>
+            <AppShell><FilesPage /></AppShell>
           </RequireAuth>
         }
       />

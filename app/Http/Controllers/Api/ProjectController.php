@@ -20,10 +20,21 @@ class ProjectController extends Controller
         $this->authorize('viewAny', Project::class);
 
         $user = $request->user();
-        $query = Project::query()->withCount('tasks')->orderBy('position');
+        $query = Project::query()
+            ->with('members:id,name')
+            ->withCount('tasks', 'members')
+            ->orderBy('position');
+
+        if (! $user->isAdmin()) {
+            // Non-admins: hide restricted projects unless they're an explicit member.
+            $query->where(function ($q) use ($user) {
+                $q->whereDoesntHave('members')
+                    ->orWhereHas('members', fn ($mq) => $mq->whereKey($user->id));
+            });
+        }
 
         if ($user->isViewer()) {
-            // Viewers only see projects where they have at least one assigned task (spec §6).
+            // On top of visibility: viewers only see projects where they have ≥1 assigned task.
             $query->whereHas('tasks.assignees', fn ($q) => $q->whereKey($user->id));
         }
 
@@ -61,7 +72,33 @@ class ProjectController extends Controller
         $this->authorize('view', $project);
 
         return response()->json([
-            'project' => new ProjectResource($project->load('statuses')->loadCount('tasks')),
+            'project' => new ProjectResource(
+                $project->load(['statuses', 'members:id,name,email,role'])
+                    ->loadCount('tasks', 'members'),
+            ),
+        ]);
+    }
+
+    /**
+     * Replace the project's member list (admin only). Empty array switches the
+     * project back to "open to everyone".
+     */
+    public function updateMembers(Request $request, Project $project): JsonResponse
+    {
+        $this->authorize('manageMembers', $project);
+
+        $data = $request->validate([
+            'user_ids' => ['present', 'array'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $project->members()->sync($data['user_ids']);
+
+        return response()->json([
+            'project' => new ProjectResource(
+                $project->fresh()->load(['statuses', 'members:id,name,email,role'])
+                    ->loadCount('tasks', 'members'),
+            ),
         ]);
     }
 

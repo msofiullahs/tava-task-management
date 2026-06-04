@@ -9,10 +9,12 @@ import { EmptyState } from '../components/EmptyState';
 interface CalendarViewProps {
   tasks: Task[];
   onOpenTask: (task: Task) => void;
+  /** Optional — supplied when the current user can create tasks. Day cells become clickable. */
+  onAddOnDate?: (dateIso: string) => void;
 }
 
 /** Spec §8 — month grid by due_date with an "Unscheduled" tray for null dates. */
-export function CalendarView({ tasks, onOpenTask }: CalendarViewProps) {
+export function CalendarView({ tasks, onOpenTask, onAddOnDate }: CalendarViewProps) {
   const [cursor, setCursor] = useState(() => new Date());
   const today = new Date();
 
@@ -49,30 +51,45 @@ export function CalendarView({ tasks, onOpenTask }: CalendarViewProps) {
         </div>
         <div className="grid flex-1 grid-cols-7 gap-px bg-slate-100 dark:bg-slate-800">
           {grid.map((d) => {
-            const dayTasks = dayMap.get(format(d, 'yyyy-MM-dd')) ?? [];
+            const iso = format(d, 'yyyy-MM-dd');
+            const dayTasks = dayMap.get(iso) ?? [];
             const inMonth = isSameMonth(d, cursor);
             const isToday = isSameDay(d, today);
+            // Cell is a button when adds are allowed; tasks inside stopPropagation
+            // so clicking a task opens its detail panel instead of the new-task modal.
+            const handleCell = onAddOnDate ? () => onAddOnDate(iso) : undefined;
             return (
               <div
                 key={d.toISOString()}
+                role={handleCell ? 'button' : undefined}
+                tabIndex={handleCell ? 0 : undefined}
+                onClick={handleCell}
+                onKeyDown={(e) => { if (handleCell && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleCell(); } }}
                 className={clsx(
-                  'flex min-h-[88px] flex-col gap-1 bg-white p-1 dark:bg-slate-900',
+                  'group flex min-h-[88px] flex-col gap-1 bg-white p-1 dark:bg-slate-900',
                   !inMonth && 'opacity-50',
+                  handleCell && 'cursor-pointer hover:bg-indigo-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:hover:bg-indigo-500/5',
                 )}
+                aria-label={handleCell ? `Add a task on ${format(d, 'MMMM d')}` : undefined}
               >
-                <div className={clsx(
-                  'self-end text-xs',
-                  isToday
-                    ? 'flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white'
-                    : 'text-slate-500',
-                )}>
-                  {d.getDate()}
+                <div className="flex items-center justify-between">
+                  {handleCell && (
+                    <span className="invisible text-xs font-bold text-indigo-500 group-hover:visible" aria-hidden>+</span>
+                  )}
+                  <div className={clsx(
+                    'ml-auto text-xs',
+                    isToday
+                      ? 'flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white'
+                      : 'text-slate-500',
+                  )}>
+                    {d.getDate()}
+                  </div>
                 </div>
                 {dayTasks.slice(0, 3).map((t) => (
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => onOpenTask(t)}
+                    onClick={(e) => { e.stopPropagation(); onOpenTask(t); }}
                     className="truncate rounded bg-indigo-50 px-1.5 py-0.5 text-left text-xs text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300"
                   >
                     {t.title}

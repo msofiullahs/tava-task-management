@@ -4,6 +4,7 @@ import { useChangePassword, useCurrentUser } from '../api/auth';
 import { humanError } from '../lib/errors';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { Logo } from '../components/Logo';
 
 /** Spec §5 — forced-change screen after admin temp-password login. Also reachable from the user menu. */
 export function ChangePasswordPage() {
@@ -32,7 +33,8 @@ export function ChangePasswordPage() {
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Logo className="mb-4 h-12 w-12" />
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
             {forced ? 'Set your password' : 'Change password'}
           </h1>

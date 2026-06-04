@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\StatusController;
@@ -15,6 +17,9 @@ Route::get('/setup/status', [SetupController::class, 'status']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
+
+// Public forgot-password endpoint — creates a request row that admins see on People page.
+Route::post('/password/forgot', [PasswordResetController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Current user / self-service
@@ -35,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects/{project}', [ProjectController::class, 'show']);
     Route::patch('/projects/{project}', [ProjectController::class, 'update']);
     Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+    Route::patch('/projects/{project}/members', [ProjectController::class, 'updateMembers']);
 
     // Statuses (project-scoped create/list, direct mutate by id)
     Route::get('/projects/{project}/statuses', [StatusController::class, 'index']);
@@ -55,4 +61,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tasks/{task}/comments', [CommentController::class, 'index']);
     Route::post('/tasks/{task}/comments', [CommentController::class, 'store']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
+
+    // Attachments — polymorphic to tasks + comments. The download route is named so
+    // AttachmentResource can build the URL with route() — same URL the SPA's
+    // "Copy link" button copies to clipboard.
+    Route::get('/attachments', [AttachmentController::class, 'index']);
+    Route::post('/attachments', [AttachmentController::class, 'store']);
+    Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
+    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download'])
+        ->name('attachments.download');
+
+    // Admin-only: pending forgot-password requests + one-click fulfil (resets + returns temp password).
+    Route::get('/password/requests', [PasswordResetController::class, 'index']);
+    Route::post('/password/requests/{passwordResetRequest}/fulfill', [PasswordResetController::class, 'fulfill']);
+    Route::delete('/password/requests/{passwordResetRequest}', [PasswordResetController::class, 'destroy']);
 });
