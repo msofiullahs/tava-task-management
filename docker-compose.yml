@@ -1,0 +1,41 @@
+# Tava — single-tenant install. `docker compose up -d` and visit the APP_URL.
+# The app container serves nginx + PHP-FPM on port 8080. MySQL stores data.
+
+services:
+  app:
+    build: .
+    image: tava-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    volumes:
+      - app_storage:/var/www/html/storage
+
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-tava}
+      MYSQL_USER: ${DB_USERNAME:-tava}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-changeme-root}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-changeme-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  app_storage:
+  db_data:

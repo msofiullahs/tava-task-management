@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@source '../../app/Http/**/*.php';
+@source '../views/**/*.blade.php';
+@source './js/**/*.{ts,tsx}';
+
+/* Spec §9.11 — Tailwind v4 equivalent of `darkMode: 'class'`. `dark:` applies whenever
+   the .dark class is on an ancestor (we toggle it on <html> via the FOUC script + ThemeProvider). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Set the native form-control palette so date pickers, scrollbars, etc. match the theme without extra CSS. */
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
