@@ -4,6 +4,7 @@ import { useDeleteAttachment, useUploadAttachment } from '../api/attachments';
 import { useCurrentUser } from '../api/auth';
 import { useToast } from '../lib/toast';
 import { humanError } from '../lib/errors';
+import { ImagePreviewModal } from './ImagePreviewModal';
 import type { Attachment } from '../types';
 
 interface AttachmentListProps {
@@ -28,6 +29,7 @@ export function AttachmentList({
   const { toast } = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [previewing, setPreviewing] = useState<Attachment | null>(null);
 
   const allowUpload = !readOnly;
 
@@ -50,11 +52,23 @@ export function AttachmentList({
 
   const onCopyLink = async (att: Attachment) => {
     try {
-      await navigator.clipboard.writeText(att.url);
+      // Build absolute URL so the copied string is shareable as-is, not relative to the current page.
+      const absolute = att.url.startsWith('http') ? att.url : new URL(att.url, window.location.origin).toString();
+      await navigator.clipboard.writeText(absolute);
       toast({ message: 'Link copied.', tone: 'success' });
     } catch {
       toast({ message: 'Couldn\'t copy automatically. Right-click the file to copy its address.', tone: 'error' });
     }
+  };
+
+  /** Forces a download via a temporary anchor with the `download` attribute set. */
+  const onDownload = (att: Attachment) => {
+    const a = document.createElement('a');
+    a.href = att.url;
+    a.download = att.original_name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -62,10 +76,7 @@ export function AttachmentList({
       onDragOver={(e) => { if (allowUpload) { e.preventDefault(); setDragOver(true); } }}
       onDragLeave={() => setDragOver(false)}
       onDrop={onDrop}
-      className={clsx(
-        'rounded-lg',
-        dragOver && 'ring-2 ring-indigo-400',
-      )}
+      className={clsx('rounded-lg', dragOver && 'ring-2 ring-indigo-400')}
     >
       {attachments.length > 0 && (
         <ul className={clsx('grid gap-2', compact ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3')}>
@@ -75,6 +86,8 @@ export function AttachmentList({
                 att={att}
                 compact={!!compact}
                 canDelete={!!me && (me.role === 'admin' || att.uploader?.id === me.id)}
+                onPreview={() => setPreviewing(att)}
+                onDownload={() => onDownload(att)}
                 onCopy={() => onCopyLink(att)}
                 onDelete={() => remove.mutate(att.id)}
               />
@@ -106,6 +119,17 @@ export function AttachmentList({
           {!compact && <span className="text-xs text-slate-400">…or drop them here</span>}
         </div>
       )}
+
+      {previewing && previewing.is_image && (
+        <ImagePreviewModal
+          open
+          src={previewing.url}
+          alt={previewing.original_name}
+          caption={previewing.original_name}
+          onClose={() => setPreviewing(null)}
+          onDownload={() => onDownload(previewing)}
+        />
+      )}
     </div>
   );
 }
@@ -114,11 +138,13 @@ interface TileProps {
   att: Attachment;
   compact: boolean;
   canDelete: boolean;
+  onPreview: () => void;
+  onDownload: () => void;
   onCopy: () => void;
   onDelete: () => void;
 }
 
-function AttachmentTile({ att, compact, canDelete, onCopy, onDelete }: TileProps) {
+function AttachmentTile({ att, compact, canDelete, onPreview, onDownload, onCopy, onDelete }: TileProps) {
   const sizeLabel = formatBytes(att.size_bytes);
 
   return (
@@ -127,58 +153,82 @@ function AttachmentTile({ att, compact, canDelete, onCopy, onDelete }: TileProps
       compact ? 'p-2' : 'flex-col',
     )}>
       {att.is_image ? (
-        <a href={att.url} target="_blank" rel="noreferrer" className={clsx(compact ? 'h-12 w-12 shrink-0' : 'block aspect-video w-full')}>
-          <img src={att.url} alt={att.original_name} className="h-full w-full object-cover" />
-        </a>
-      ) : (
-        <a
-          href={att.url}
-          target="_blank"
-          rel="noreferrer"
+        // Click the thumbnail to open the lightbox (faster than going via the menu).
+        <button
+          type="button"
+          onClick={onPreview}
+          aria-label={`Preview ${att.original_name}`}
           className={clsx(
-            'flex items-center justify-center bg-slate-50 text-slate-400 dark:bg-slate-800',
+            'group/img relative block bg-slate-50 dark:bg-slate-800',
+            compact ? 'h-12 w-12 shrink-0' : 'aspect-video w-full',
+          )}
+        >
+          <img src={att.url} alt={att.original_name} className="h-full w-full object-cover" />
+          {!compact && (
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/0 text-white opacity-0 transition group-hover/img:bg-slate-900/40 group-hover/img:opacity-100">
+              <EyeIcon />
+            </span>
+          )}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onDownload}
+          aria-label={`Download ${att.original_name}`}
+          className={clsx(
+            'flex items-center justify-center bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-800/80',
             compact ? 'h-12 w-12 shrink-0' : 'aspect-video w-full',
           )}
         >
           <FileIcon />
-        </a>
+        </button>
       )}
 
       <div className={clsx('flex min-w-0 flex-1 flex-col justify-between gap-1 p-2', compact && 'pl-3')}>
-        <a
-          href={att.url}
-          target="_blank"
-          rel="noreferrer"
-          className="truncate text-xs font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-200 dark:hover:text-indigo-300"
+        <button
+          type="button"
+          onClick={att.is_image ? onPreview : onDownload}
+          className="truncate text-left text-xs font-medium text-slate-700 hover:text-indigo-600 dark:text-slate-200 dark:hover:text-indigo-300"
           title={att.original_name}
         >
           {att.original_name}
-        </a>
+        </button>
         <div className="flex items-center justify-between text-[10px] text-slate-400">
           <span>{sizeLabel}</span>
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={onCopy}
-              className="rounded p-1 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              title="Copy link"
-            >
-              <LinkIcon />
-            </button>
+          <div className="flex gap-0.5">
+            {att.is_image && (
+              <IconButton onClick={onPreview} title="Preview"><EyeIcon /></IconButton>
+            )}
+            <IconButton onClick={onDownload} title="Download"><DownloadIcon /></IconButton>
+            <IconButton onClick={onCopy} title="Copy link"><LinkIcon /></IconButton>
             {canDelete && (
-              <button
-                type="button"
-                onClick={onDelete}
-                className="rounded p-1 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30"
-                title="Remove"
-              >
-                ×
-              </button>
+              <IconButton onClick={onDelete} title="Remove" tone="danger">×</IconButton>
             )}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function IconButton({
+  children, onClick, title, tone,
+}: { children: React.ReactNode; onClick: () => void; title: string; tone?: 'danger' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      className={clsx(
+        'rounded p-1 transition',
+        tone === 'danger'
+          ? 'hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30'
+          : 'hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200',
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -209,6 +259,23 @@ function LinkIcon() {
   return (
     <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
       <path d="M8 12a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1.5 1.5M12 8a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1.5-1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M10 3v10m0 0-4-4m4 4 4-4M4 17h12" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M1.5 10S4 4 10 4s8.5 6 8.5 6-2.5 6-8.5 6S1.5 10 1.5 10Z" />
+      <circle cx="10" cy="10" r="2.5" />
     </svg>
   );
 }

@@ -4,7 +4,7 @@ import { useUploadAttachment } from '../api/attachments';
 import { useDeleteTask, useRestoreTask, useUpdateTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
 import { Modal } from './Modal';
-import { TextField, TextArea } from './TextField';
+import { TextField } from './TextField';
 import { Button } from './Button';
 import { DatePicker } from './DatePicker';
 import { AssigneePicker } from './AssigneePicker';
@@ -12,6 +12,9 @@ import { PriorityPicker } from './PriorityPicker';
 import { StatusSelect } from './StatusSelect';
 import { Avatar } from './Avatar';
 import { AttachmentList } from './AttachmentList';
+import { RichTextEditor } from './RichTextEditor';
+import { LinkedTasksSection } from './LinkedTasksSection';
+import { SubtasksSection } from './SubtasksSection';
 import { humanError } from '../lib/errors';
 import { useToast } from '../lib/toast';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
@@ -21,9 +24,11 @@ interface TaskDetailPanelProps {
   task: Task;
   statuses: Status[];
   onClose: () => void;
+  /** Open another task in this same panel (links + subtasks jump-to). */
+  onOpenTask?: (taskId: number) => void;
 }
 
-export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProps) {
+export function TaskDetailPanel({ task, statuses, onClose, onOpenTask }: TaskDetailPanelProps) {
   const { data: user } = useCurrentUser();
   const update = useUpdateTask(task.project_uuid);
   const remove = useDeleteTask(task.project_uuid);
@@ -68,6 +73,16 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
   return (
     <Modal open onClose={onClose} size="lg" title="">
       <div className="space-y-5">
+        {task.parent && (
+          <button
+            type="button"
+            onClick={() => onOpenTask?.(task.parent!.id)}
+            className="-mb-1 inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
+            title="Open parent task"
+          >
+            <span aria-hidden>↳</span> Subtask of <span className="font-medium">{task.parent.title}</span>
+          </button>
+        )}
         <input
           value={title}
           disabled={!canEdit}
@@ -100,14 +115,16 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
           </div>
         </div>
 
-        <TextArea
-          label="Description"
-          rows={5}
-          disabled={!canEdit}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          onBlur={() => { if (description !== (task.description ?? '')) save({ description: description || null }); }}
-        />
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Description</label>
+          <RichTextEditor
+            value={description}
+            taskId={task.id}
+            disabled={!canEdit}
+            onChange={setDescription}
+            onBlur={() => { if (description !== (task.description ?? '')) save({ description: description || null }); }}
+          />
+        </div>
 
         <section>
           <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Attachments</h3>
@@ -119,6 +136,19 @@ export function TaskDetailPanel({ task, statuses, onClose }: TaskDetailPanelProp
             readOnly={!canEdit}
           />
         </section>
+
+        <SubtasksSection
+          task={task}
+          statuses={statuses}
+          readOnly={!canEdit}
+          onOpenSubtask={(id) => onOpenTask?.(id)}
+        />
+
+        <LinkedTasksSection
+          task={task}
+          readOnly={!canEdit}
+          onOpenLinkedTask={(id) => onOpenTask?.(id)}
+        />
 
         <CommentThread taskId={task.id} />
 
@@ -158,7 +188,7 @@ function CommentThread({ taskId }: { taskId: number }) {
         {comments.length === 0 && <li className="text-sm text-slate-500">No comments yet.</li>}
         {comments.map((c) => (
           <li key={c.id} className="flex gap-3">
-            <Avatar name={c.user.name} size="sm" />
+            <Avatar name={c.user.name} src={c.user.avatar_url} size="sm" />
             <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-slate-700 dark:text-slate-200">{c.user.name}</span>

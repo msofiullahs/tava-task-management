@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { TextField, TextArea } from './TextField';
+import { TextField } from './TextField';
 import { DatePicker } from './DatePicker';
 import { AssigneePicker } from './AssigneePicker';
 import { PriorityPicker } from './PriorityPicker';
 import { StatusSelect } from './StatusSelect';
-import { useCreateTask } from '../api/tasks';
+import { RichTextEditor, rewriteInlineImagesForTask } from './RichTextEditor';
+import { useCreateTask, useUpdateTask } from '../api/tasks';
 import { useToast } from '../lib/toast';
 import { humanError } from '../lib/errors';
 import type { Priority, Status } from '../types';
@@ -25,11 +26,16 @@ interface NewTaskModalProps {
  * Spec §9 keeps the inline quick-add for speed, but the user asked for a real modal
  * with every field surfaced — useful for the calendar (where you don't have a column
  * to type into) and for tasks that need detail at creation time.
+ *
+ * Description uses the RichTextEditor in "deferred" mode — pasted/dropped images
+ * become data: URLs until we have a task id to attach them to. After creating the
+ * task we upload each inline image and PATCH the description with the rewritten HTML.
  */
 export function NewTaskModal({
   open, onClose, projectKey, statuses, initialStatusId, initialDueDate = null,
 }: NewTaskModalProps) {
   const create = useCreateTask(projectKey);
+  const update = useUpdateTask(projectKey);
   const { toast } = useToast();
 
   const defaultStatusId = initialStatusId
@@ -43,6 +49,9 @@ export function NewTaskModal({
   const [dueDate, setDueDate] = useState<string | null>(initialDueDate);
   const [assigneeIds, setAssigneeIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Two-phase progress: "Creating…" while the task POST is in flight,
+  // "Uploading images…" while we walk the description for data: URLs.
+  const [phase, setPhase] = useState<'idle' | 'creating' | 'uploading'>('idle');
 
   const reset = () => {
     setTitle(''); setDescription('');
@@ -51,32 +60,52 @@ export function NewTaskModal({
     setDueDate(initialDueDate);
     setAssigneeIds([]);
     setError(null);
+    setPhase('idle');
   };
 
-  const onSubmit = (e: FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       setError('Please enter a task name.');
       return;
     }
-    create.mutate(
-      {
+    setError(null);
+
+    try {
+      setPhase('creating');
+      const task = await create.mutateAsync({
         title: title.trim(),
         description: description.trim() || undefined,
         status_id: statusId,
         priority,
         due_date: dueDate,
         assignee_ids: assigneeIds,
-      },
-      {
-        onSuccess: () => { reset(); onClose(); toast({ message: 'Task created.', tone: 'success' }); },
-        onError: (err) => setError(humanError(err)),
-      },
-    );
+      });
+
+      // If the description had inline data: images, upload them now that the task
+      // exists and update the description with the rewritten HTML.
+      if (description && /data:image\//.test(description)) {
+        setPhase('uploading');
+        const rewritten = await rewriteInlineImagesForTask(description, task.id);
+        if (rewritten !== description) {
+          await update.mutateAsync({ id: task.id, description: rewritten });
+        }
+      }
+
+      toast({ message: 'Task created.', tone: 'success' });
+      reset();
+      onClose();
+    } catch (err) {
+      setError(humanError(err));
+      setPhase('idle');
+    }
   };
 
+  const busy = phase !== 'idle';
+  const submitLabel = phase === 'creating' ? 'Creating…' : phase === 'uploading' ? 'Uploading images…' : 'Create task';
+
   return (
-    <Modal open={open} onClose={() => { reset(); onClose(); }} title="New task" size="lg">
+    <Modal open={open} onClose={() => { if (!busy) { reset(); onClose(); } }} title="New task" size="lg">
       <form onSubmit={onSubmit} className="space-y-4">
         <TextField
           label="Task name"
@@ -87,14 +116,14 @@ export function NewTaskModal({
           placeholder="What needs to happen?"
         />
 
-        <TextArea
-          label="Description"
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add any details, links, or acceptance criteria."
-          hint="You can attach files after creating the task."
-        />
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Description</label>
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            placeholder="Add details, paste screenshots, drop images…"
+          />
+        </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -126,12 +155,10 @@ export function NewTaskModal({
         )}
 
         <div className="flex justify-end gap-2 border-t border-slate-200 pt-4 dark:border-slate-800">
-          <Button variant="secondary" onClick={() => { reset(); onClose(); }} disabled={create.isPending}>
+          <Button variant="secondary" onClick={() => { reset(); onClose(); }} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit" disabled={create.isPending}>
-            {create.isPending ? 'Creating…' : 'Create task'}
-          </Button>
+          <Button type="submit" disabled={busy}>{submitLabel}</Button>
         </div>
       </form>
     </Modal>

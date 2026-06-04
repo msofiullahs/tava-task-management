@@ -15,3 +15,46 @@
 /* Set the native form-control palette so date pickers, scrollbars, etc. match the theme without extra CSS. */
 html { color-scheme: light; }
 html.dark { color-scheme: dark; }
+
+/* Rendered output from the TipTap rich-text editor. Same class is applied in
+   both edit and view modes so styling is identical. */
+.tiptap-content { line-height: 1.55; }
+.tiptap-content h1 { font-size: 1.25rem; font-weight: 600; margin: 0.75em 0 0.4em; }
+.tiptap-content h2 { font-size: 1.1rem;  font-weight: 600; margin: 0.7em 0 0.35em; }
+.tiptap-content h3 { font-size: 1rem;    font-weight: 600; margin: 0.65em 0 0.3em; }
+.tiptap-content p  { margin: 0.5em 0; }
+.tiptap-content ul,
+.tiptap-content ol { margin: 0.5em 0; padding-left: 1.5rem; }
+.tiptap-content ul { list-style: disc; }
+.tiptap-content ol { list-style: decimal; }
+.tiptap-content li > p { margin: 0.15em 0; }
+.tiptap-content blockquote {
+    border-left: 3px solid rgb(203 213 225);
+    padding-left: 0.75rem;
+    color: rgb(71 85 105);
+    margin: 0.75em 0;
+}
+.tiptap-content.dark blockquote,
+.dark .tiptap-content blockquote {
+    border-color: rgb(71 85 105);
+    color: rgb(148 163 184);
+}
+.tiptap-content code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9em;
+    background: rgb(241 245 249);
+    padding: 0.1em 0.3em;
+    border-radius: 0.25rem;
+}
+.dark .tiptap-content code { background: rgb(30 41 59); }
+.tiptap-content a { color: rgb(79 70 229); text-decoration: underline; }
+.tiptap-content img { display: block; margin: 0.75em 0; max-width: 100%; height: auto; }
+
+/* Tiptap's placeholder shim — show the prompt text only when the editor is empty. */
+.tiptap-content p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    color: rgb(148 163 184);
+    pointer-events: none;
+    float: left;
+    height: 0;
+}

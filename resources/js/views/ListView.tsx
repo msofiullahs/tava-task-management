@@ -101,7 +101,15 @@ function Group({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: G
               >
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
+                    {t.parent && (
+                      <span aria-hidden className="text-xs text-slate-400" title={`Subtask of "${t.parent.title}"`}>↳</span>
+                    )}
                     <span className="text-slate-900 dark:text-slate-100">{t.title}</span>
+                    {typeof t.subtask_count === 'number' && t.subtask_count > 0 && (
+                      <span className="text-xs text-slate-400" title={`${t.subtask_count} subtask${t.subtask_count === 1 ? '' : 's'}`}>
+                        ☰ {t.subtask_count}
+                      </span>
+                    )}
                     {typeof t.comment_count === 'number' && t.comment_count > 0 && (
                       <span className="text-xs text-slate-400">💬 {t.comment_count}</span>
                     )}
@@ -123,7 +131,7 @@ function Group({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: G
                 </td>
                 <td className="hidden px-3 py-2 md:table-cell">
                   <div className="flex -space-x-1">
-                    {(t.assignees ?? []).slice(0, 3).map((a) => <Avatar key={a.id} name={a.name} size="xs" />)}
+                    {(t.assignees ?? []).slice(0, 3).map((a) => <Avatar key={a.id} name={a.name} src={a.avatar_url} size="xs" />)}
                   </div>
                 </td>
               </tr>

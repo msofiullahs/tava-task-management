@@ -139,7 +139,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 onClick={() => setMenuOpen((o) => !o)}
                 className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
-                <Avatar name={user.name} size="sm" />
+                <Avatar name={user.name} src={user.avatar_url} size="sm" />
                 <span className="hidden text-sm text-slate-700 dark:text-slate-200 sm:inline">{user.name}</span>
               </button>
               {menuOpen && (

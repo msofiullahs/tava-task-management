@@ -106,7 +106,7 @@ export function ProjectMembersModal({ open, onClose, project }: ProjectMembersMo
                     onChange={() => toggle(u.id)}
                     className="h-4 w-4 rounded border-slate-300"
                   />
-                  <Avatar name={u.name} size="sm" />
+                  <Avatar name={u.name} src={u.avatar_url} size="sm" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">{u.name}</div>
                     <div className="truncate text-xs text-slate-500">{u.email}</div>

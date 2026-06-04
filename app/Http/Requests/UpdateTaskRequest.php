@@ -22,6 +22,9 @@ class UpdateTaskRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'status_id' => ['sometimes', 'integer', Rule::exists('statuses', 'id')->where('project_id', $projectId)],
+            // parent_id changes are validated for cycles inside the controller (the model
+            // already knows its descendant chain). null clears the parent (promotes to top-level).
+            'parent_id' => ['sometimes', 'nullable', 'integer', Rule::exists('tasks', 'id')->whereNull('deleted_at')->where('project_id', $projectId)],
             'priority' => ['sometimes', 'nullable', Rule::in(Task::PRIORITIES)],
             'due_date' => ['sometimes', 'nullable', 'date'],
             'assignee_ids' => ['sometimes', 'nullable', 'array'],

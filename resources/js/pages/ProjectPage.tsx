@@ -136,7 +136,18 @@ export function ProjectPage() {
         )}
       </div>
 
-      {fresh && <TaskDetailPanel task={fresh} statuses={statuses} onClose={() => setOpenTask(null)} />}
+      {fresh && (
+        <TaskDetailPanel
+          task={fresh}
+          statuses={statuses}
+          onClose={() => setOpenTask(null)}
+          onOpenTask={(id) => {
+            // Linked / subtask navigation — swap which task is open in the panel.
+            const next = tasks.find((t) => t.id === id);
+            if (next) setOpenTask(next);
+          }}
+        />
+      )}
 
       {newTaskSeed && (
         <NewTaskModal

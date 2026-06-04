@@ -112,7 +112,7 @@ export function FilesPage() {
                   <td className="hidden px-3 py-2 md:table-cell">
                     {f.uploader ? (
                       <span className="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-200">
-                        <Avatar name={f.uploader.name} size="xs" />
+                        <Avatar name={f.uploader.name} src={f.uploader.avatar_url} size="xs" />
                         {f.uploader.name}
                       </span>
                     ) : (

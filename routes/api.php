@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ProjectController;
 use App\Http\Controllers\Api\SetupController;
 use App\Http\Controllers\Api\StatusController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TaskLinkController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,8 +25,11 @@ Route::post('/password/forgot', [PasswordResetController::class, 'store']);
 Route::middleware('auth:sanctum')->group(function () {
     // Current user / self-service
     Route::get('/user', [AuthController::class, 'current']);
+    Route::patch('/user', [AuthController::class, 'updateProfile']);
     Route::post('/user/password', [AuthController::class, 'changePassword']);
     Route::patch('/user/preferences', [AuthController::class, 'updatePreferences']);
+    Route::post('/user/avatar', [AuthController::class, 'uploadAvatar']);
+    Route::delete('/user/avatar', [AuthController::class, 'removeAvatar']);
 
     // Admin-only user management
     Route::get('/users', [UserController::class, 'index']);
@@ -57,19 +61,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
     Route::post('/tasks/{task}/restore', [TaskController::class, 'restore'])->withTrashed();
 
+    // Task links — relates_to (symmetric) / blocks / duplicates. Picker on the SPA
+    // sends one direction; the controller normalises symmetric types.
+    Route::get('/tasks/{task}/links', [TaskLinkController::class, 'index']);
+    Route::post('/tasks/{task}/links', [TaskLinkController::class, 'store']);
+    Route::delete('/links/{link}', [TaskLinkController::class, 'destroy']);
+
+    // Subtasks — convenience wrapper around tasks.store that inherits project + status.
+    Route::post('/tasks/{task}/subtasks', [TaskController::class, 'storeSubtask']);
+
     // Comments
     Route::get('/tasks/{task}/comments', [CommentController::class, 'index']);
     Route::post('/tasks/{task}/comments', [CommentController::class, 'store']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
 
-    // Attachments — polymorphic to tasks + comments. The download route is named so
-    // AttachmentResource can build the URL with route() — same URL the SPA's
-    // "Copy link" button copies to clipboard.
+    // Attachments — polymorphic to tasks + comments. List + write endpoints stay here
+    // (SPA-only, called via axios). The actual file download is registered in web.php
+    // under the same `attachments.download` name so direct browser visits work.
     Route::get('/attachments', [AttachmentController::class, 'index']);
     Route::post('/attachments', [AttachmentController::class, 'store']);
     Route::delete('/attachments/{attachment}', [AttachmentController::class, 'destroy']);
-    Route::get('/attachments/{attachment}/download', [AttachmentController::class, 'download'])
-        ->name('attachments.download');
 
     // Admin-only: pending forgot-password requests + one-click fulfil (resets + returns temp password).
     Route::get('/password/requests', [PasswordResetController::class, 'index']);

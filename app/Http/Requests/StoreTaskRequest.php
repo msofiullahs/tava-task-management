@@ -22,6 +22,9 @@ class StoreTaskRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'status_id' => ['nullable', 'integer', Rule::exists('statuses', 'id')->where('project_id', $projectId)],
+            // Parent must be a non-trashed task in the SAME project. No cycle check needed
+            // on create — a brand-new task has no descendants yet.
+            'parent_id' => ['nullable', 'integer', Rule::exists('tasks', 'id')->whereNull('deleted_at')->where('project_id', $projectId)],
             'priority' => ['nullable', Rule::in(Task::PRIORITIES)],
             'due_date' => ['nullable', 'date'],
             'assignee_ids' => ['nullable', 'array'],

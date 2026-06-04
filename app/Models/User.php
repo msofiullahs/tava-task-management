@@ -12,7 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'must_change_password', 'theme'])]
+#[Fillable(['name', 'email', 'password', 'role', 'must_change_password', 'theme', 'avatar_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -52,6 +52,24 @@ class User extends Authenticatable
     public function canEditTasks(): bool
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MEMBER], true);
+    }
+
+    /**
+     * Absolute URL to this user's avatar, served via the auth-checked
+     * users.avatar route. Returns null when the user hasn't uploaded one;
+     * the UI falls back to the letter-bubble Avatar component in that case.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (! $this->avatar_path) {
+            return null;
+        }
+
+        // Cache-bust via updated_at so a fresh upload replaces the cached image.
+        return route('users.avatar', [
+            'user' => $this->id,
+            'v' => $this->updated_at?->timestamp,
+        ]);
     }
 
     /** @return HasMany<Project, $this> */

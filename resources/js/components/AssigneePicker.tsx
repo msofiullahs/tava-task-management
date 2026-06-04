@@ -50,7 +50,7 @@ export function AssigneePicker({ selected, onChange }: AssigneePickerProps) {
           <span className="text-slate-500 dark:text-slate-400">Assign to…</span>
         ) : (
           <div className="flex flex-wrap items-center gap-1">
-            {picked.map((u) => <Avatar key={u.id} name={u.name} size="xs" />)}
+            {picked.map((u) => <Avatar key={u.id} name={u.name} src={u.avatar_url} size="xs" />)}
             <span className="ml-1 text-slate-700 dark:text-slate-200">
               {picked.length === 1 ? picked[0].name : `${picked.length} people`}
             </span>
@@ -78,7 +78,7 @@ export function AssigneePicker({ selected, onChange }: AssigneePickerProps) {
                 onClick={() => toggle(u.id)}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                <Avatar name={u.name} size="sm" />
+                <Avatar name={u.name} src={u.avatar_url} size="sm" />
                 <span className="flex-1 text-left text-slate-900 dark:text-slate-100">{u.name}</span>
                 {selected.includes(u.id) && <span className="text-indigo-500">✓</span>}
               </button>

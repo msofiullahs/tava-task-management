@@ -17,6 +17,7 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'must_change_password' => (bool) $this->must_change_password,
             'theme' => $this->theme,
+            'avatar_url' => $this->resource->avatarUrl(),
             'created_at' => $this->created_at,
         ];
     }

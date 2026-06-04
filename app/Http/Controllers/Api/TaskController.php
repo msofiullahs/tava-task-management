@@ -26,8 +26,8 @@ class TaskController extends Controller
         $query = $project->tasks()
             // project:id,uuid is one row; eager-loading it lets TaskResource emit project_uuid
             // so the SPA can invalidate the right project-scoped cache without prop-plumbing.
-            ->with(['assignees', 'project:id,uuid'])
-            ->withCount('comments', 'attachments')
+            ->with(['assignees', 'project:id,uuid', 'parent:id,title'])
+            ->withCount('comments', 'attachments', 'children')
             ->orderBy('position');
 
         if ($user->isViewer()) {
@@ -56,6 +56,7 @@ class TaskController extends Controller
             $task = Task::create([
                 'project_id' => $project->id,
                 'status_id' => $statusId,
+                'parent_id' => $data['parent_id'] ?? null,
                 'title' => $data['title'],
                 'description' => $data['description'] ?? null,
                 'priority' => $data['priority'] ?? null,
@@ -72,7 +73,7 @@ class TaskController extends Controller
         });
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid')->loadCount('comments', 'attachments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid', 'parent:id,title')->loadCount('comments', 'attachments', 'children')),
         ], 201);
     }
 
@@ -81,13 +82,23 @@ class TaskController extends Controller
         $this->authorize('view', $task);
 
         return response()->json([
-            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid')->loadCount('comments', 'attachments')),
+            'task' => new TaskResource($task->load('assignees', 'attachments.uploader', 'project:id,uuid', 'parent:id,title')->loadCount('comments', 'attachments', 'children')),
         ]);
     }
 
     public function update(UpdateTaskRequest $request, Task $task): JsonResponse
     {
         $data = $request->validated();
+
+        // Cycle check — moving a task under one of its own descendants would create a loop.
+        if (array_key_exists('parent_id', $data) && $data['parent_id'] !== null && $data['parent_id'] !== $task->parent_id) {
+            $candidate = Task::find($data['parent_id']);
+            if ($candidate && $candidate->hasAncestor($task->id)) {
+                return response()->json([
+                    'message' => 'You can\'t make a task a child of one of its own subtasks.',
+                ], 422);
+            }
+        }
 
         DB::transaction(function () use ($task, $data) {
             if (array_key_exists('assignee_ids', $data)) {
@@ -99,8 +110,49 @@ class TaskController extends Controller
         });
 
         return response()->json([
-            'task' => new TaskResource($task->fresh()->load('assignees')->loadCount('comments')),
+            'task' => new TaskResource($task->fresh()->load('assignees', 'attachments.uploader', 'project:id,uuid', 'parent:id,title')->loadCount('comments', 'attachments', 'children')),
         ]);
+    }
+
+    /**
+     * Convenience endpoint for adding a subtask. Inherits the parent's project +
+     * default status so the SPA doesn't have to thread either through every call.
+     */
+    public function storeSubtask(StoreTaskRequest $request, Task $task): JsonResponse
+    {
+        $this->authorize('update', $task);
+
+        $statusId = $request->input('status_id') ?? Status::where('project_id', $task->project_id)
+            ->where('is_default', true)
+            ->value('id') ?? Status::where('project_id', $task->project_id)->orderBy('position')->value('id');
+
+        $last = Task::where('project_id', $task->project_id)
+            ->where('status_id', $statusId)
+            ->orderByDesc('position')
+            ->value('position');
+
+        $child = DB::transaction(function () use ($task, $request, $statusId, $last) {
+            $child = Task::create([
+                'project_id' => $task->project_id,
+                'status_id' => $statusId,
+                'parent_id' => $task->id,
+                'title' => $request->string('title'),
+                'description' => $request->input('description'),
+                'priority' => $request->input('priority'),
+                'due_date' => $request->input('due_date'),
+                'position' => LexoRank::between($last, null),
+                'created_by' => $request->user()->id,
+            ]);
+            if ($request->filled('assignee_ids')) {
+                $child->assignees()->sync($request->input('assignee_ids', []));
+            }
+
+            return $child;
+        });
+
+        return response()->json([
+            'task' => new TaskResource($child->load('assignees', 'project:id,uuid', 'parent:id,title')->loadCount('comments', 'attachments', 'children')),
+        ], 201);
     }
 
     public function move(MoveTaskRequest $request, Task $task): JsonResponse

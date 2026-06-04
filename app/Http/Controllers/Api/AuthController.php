@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\UpdatePreferencesRequest;
+use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\UploadAvatarRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -73,6 +76,43 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $user->fill($request->validated())->save();
+
+        return response()->json(['user' => new UserResource($user->fresh())]);
+    }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->fill($request->validated())->save();
+
+        return response()->json(['user' => new UserResource($user->fresh())]);
+    }
+
+    public function uploadAvatar(UploadAvatarRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Delete the previous avatar so storage doesn't accumulate stale uploads.
+        if ($user->avatar_path) {
+            Storage::disk('local')->delete($user->avatar_path);
+        }
+
+        $path = $request->file('avatar')->store('avatars', 'local');
+        $user->forceFill(['avatar_path' => $path])->save();
+        // Touch updated_at explicitly so the avatar_url cache-buster reflects the new image.
+        $user->touch();
+
+        return response()->json(['user' => new UserResource($user->fresh())]);
+    }
+
+    public function removeAvatar(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->avatar_path) {
+            Storage::disk('local')->delete($user->avatar_path);
+        }
+        $user->forceFill(['avatar_path' => null])->save();
+        $user->touch();
 
         return response()->json(['user' => new UserResource($user->fresh())]);
     }

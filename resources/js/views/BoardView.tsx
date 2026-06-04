@@ -315,7 +315,7 @@ function TaskCard({ task, statuses, onOpen, dragging }: TaskCardProps) {
           </span>
         )}
         <div className="ml-auto flex -space-x-1">
-          {(task.assignees ?? []).slice(0, 3).map((a) => <Avatar key={a.id} name={a.name} size="xs" />)}
+          {(task.assignees ?? []).slice(0, 3).map((a) => <Avatar key={a.id} name={a.name} src={a.avatar_url} size="xs" />)}
         </div>
       </div>
     </div>

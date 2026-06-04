@@ -77,4 +77,42 @@ class Task extends Model
     {
         return $this->morphMany(Attachment::class, 'attachable')->latest();
     }
+
+    /** Links where this task is the source. e.g. "this task BLOCKS X". */
+    public function outgoingLinks(): HasMany
+    {
+        return $this->hasMany(TaskLink::class, 'source_task_id');
+    }
+
+    /** Links where this task is the target. e.g. "X BLOCKS this task" → shown as "Blocked by X". */
+    public function incomingLinks(): HasMany
+    {
+        return $this->hasMany(TaskLink::class, 'target_task_id');
+    }
+
+    /**
+     * Walk up the parent chain and return true if $candidateAncestorId is
+     * already one of this task's ancestors (or the task itself). Used to
+     * reject parent_id changes that would create a cycle.
+     */
+    public function hasAncestor(int $candidateAncestorId): bool
+    {
+        if ($this->id === $candidateAncestorId) {
+            return true;
+        }
+        $current = $this->parent;
+        $seen = [$this->id];
+        while ($current) {
+            if (in_array($current->id, $seen, true)) {
+                return true; // existing cycle — defensively bail
+            }
+            if ($current->id === $candidateAncestorId) {
+                return true;
+            }
+            $seen[] = $current->id;
+            $current = $current->parent;
+        }
+
+        return false;
+    }
 }

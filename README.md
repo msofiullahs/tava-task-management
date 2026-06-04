@@ -2,7 +2,25 @@
 
 A focused, ClickUp-style task manager. Self-hosted, single-tenant. Laravel API + React SPA in one repo.
 
-Projects → Tasks, with three views (List, Board, Calendar), custom per-project statuses, comments, role-based permissions, and light/dark theme. See [tava-build-spec.md](tava-build-spec.md) for the full v1 spec.
+Projects → Tasks, with three views (List, Board, Calendar), custom per-project statuses, comments, role-based permissions, and light/dark theme.
+
+## Test accounts
+
+Run `php artisan migrate:fresh --seed` to populate the database with five users
+covering every role. Sign in at `/login`:
+
+| Email | Password | Role |
+|---|---|---|
+| `alex@lumendgital.id` | `AdminLumen!26` | Admin |
+| `sam@lumendgital.id` | `SamRivera26!` | Member |
+| `jordan@lumendgital.id` | `JordanLee26!` | Member |
+| `maya@lumendgital.id` | `MayaSingh26!` | Member · forced password change on first sign-in |
+| `chris@lumendgital.id` | `ChrisView26!` | Viewer |
+
+Along with the accounts you also get 6 projects (2 of them restricted to specific
+members), ~50 tasks across every status / priority / due-date variant, sample
+subtasks, task links, attachments, and 3 pending password-reset requests — enough
+to exercise every view and role-scoped flow.
 
 ## Install (one command)
 

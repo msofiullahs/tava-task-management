@@ -92,3 +92,53 @@ export function useUpdatePreferences() {
     onSuccess: (user) => qc.setQueryData(['user'], user),
   });
 }
+
+export function useUpdateProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { name?: string; email?: string }) => {
+      const res = await http.patch<{ user: User }>('/user', payload);
+      return res.data.user;
+    },
+    onSuccess: (user) => {
+      qc.setQueryData(['user'], user);
+      // The user's name appears in lots of places (assignees, comments, etc.) — refetch.
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+export function useUploadAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append('avatar', file);
+      const res = await http.post<{ user: User }>('/user/avatar', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return res.data.user;
+    },
+    onSuccess: (user) => {
+      qc.setQueryData(['user'], user);
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
+
+export function useRemoveAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await http.delete<{ user: User }>('/user/avatar');
+      return res.data.user;
+    },
+    onSuccess: (user) => {
+      qc.setQueryData(['user'], user);
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}

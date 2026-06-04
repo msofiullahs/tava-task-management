@@ -101,7 +101,7 @@ export function PeoplePage() {
               <tr key={u.id} className="border-t border-slate-100 dark:border-slate-800">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Avatar name={u.name} size="sm" />
+                    <Avatar name={u.name} src={u.avatar_url} size="sm" />
                     <span className="text-slate-900 dark:text-slate-100">{u.name}</span>
                     {u.must_change_password && (
                       <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">

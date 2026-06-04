@@ -11,6 +11,7 @@ export interface User {
   role: Role;
   must_change_password: boolean;
   theme: Theme | null;
+  avatar_url: string | null;
   created_at: string;
 }
 
@@ -18,6 +19,7 @@ export interface UserSummary {
   id: number;
   name: string;
   email: string;
+  avatar_url: string | null;
 }
 
 export interface Status {
@@ -66,7 +68,35 @@ export interface Task {
   comment_count?: number;
   attachment_count?: number;
   attachments?: Attachment[];
+  parent?: { id: number; title: string } | null;
+  subtask_count?: number;
 }
+
+export type TaskLinkType = 'relates_to' | 'blocks' | 'duplicates';
+
+export interface TaskLink {
+  id: number;
+  type: TaskLinkType;
+  direction: 'outgoing' | 'incoming';
+  /** The "other side" of the link from the viewing task's perspective. */
+  task: {
+    id: number;
+    title: string;
+    project_id: number;
+    project_uuid: string | null;
+    status: { id: number; name: string; color: string } | null;
+  };
+}
+
+/** UI labels for each link type + direction combination. */
+export const LINK_LABELS: Record<string, string> = {
+  'relates_to:outgoing': 'Related to',
+  'relates_to:incoming': 'Related to',
+  'blocks:outgoing': 'Blocks',
+  'blocks:incoming': 'Blocked by',
+  'duplicates:outgoing': 'Duplicates',
+  'duplicates:incoming': 'Duplicated by',
+};
 
 export interface Comment {
   id: number;

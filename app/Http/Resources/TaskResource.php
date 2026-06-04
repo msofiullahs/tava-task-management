@@ -30,6 +30,13 @@ class TaskResource extends JsonResource
             'comment_count' => $this->when(isset($this->comments_count), fn () => (int) $this->comments_count),
             'attachment_count' => $this->when(isset($this->attachments_count), fn () => (int) $this->attachments_count),
             'attachments' => AttachmentResource::collection($this->whenLoaded('attachments')),
+            // Parent summary — present when parent_id is set and the relation is loaded
+            // (TaskController eager-loads parent:id,title everywhere it returns TaskResource).
+            'parent' => $this->whenLoaded('parent', fn () => $this->parent ? [
+                'id' => $this->parent->id,
+                'title' => $this->parent->title,
+            ] : null),
+            'subtask_count' => $this->when(isset($this->children_count), fn () => (int) $this->children_count),
         ];
     }
 }
