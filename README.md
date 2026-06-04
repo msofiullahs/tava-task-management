@@ -4,6 +4,56 @@ A focused, ClickUp-style task manager. Self-hosted, single-tenant. Laravel API +
 
 Projects → Tasks, with three views (List, Board, Calendar), custom per-project statuses, comments, role-based permissions, and light/dark theme.
 
+## Screenshots
+
+### Projects home — pick a project to drill into
+
+![Projects home](docs/screenshots/projects-home.png)
+
+### Three views, one cache
+
+The List, Board, and Calendar views all read from the same TanStack Query cache, so switching is instant.
+
+| List | Board | Calendar |
+|---|---|---|
+| ![List view](docs/screenshots/project-list-view.png) | ![Board view](docs/screenshots/project-board-view.png) | ![Calendar view](docs/screenshots/project-calendar-view.png) |
+
+### Task detail — everything on one panel
+
+WYSIWYG description (paste / drop images), attachments, subtasks with status colours, typed links between tasks, and a comment thread.
+
+| Top: metadata + WYSIWYG | Bottom: links + comments |
+|---|---|
+| ![Task detail top](docs/screenshots/task-detail-panel.png) | ![Linked tasks + comments](docs/screenshots/task-linked-and-comments.png) |
+
+### Creating a task
+
+Same WYSIWYG editor works for new tasks too — pasted images become data URLs in the modal and get uploaded after the task is created.
+
+![New task modal](docs/screenshots/new-task-modal.png)
+
+### Files — every upload in one place
+
+Each task or comment attachment shows up here with the task it belongs to, who uploaded it, and a one-click **Copy link** for sharing.
+
+![Files page](docs/screenshots/files-page.png)
+
+### People — admin-only
+
+Add teammates without SMTP (the admin gets a temporary password to share manually), and act on incoming password-reset requests.
+
+![People page](docs/screenshots/people-page.png)
+
+### Account — profile + avatar + password
+
+![Account page](docs/screenshots/account-page.png)
+
+### Sign-in flow
+
+| Sign in | Forgot password |
+|---|---|
+| ![Login page](docs/screenshots/login-page.png) | ![Forgot password](docs/screenshots/forgot-password-page.png) |
+
 ## Test accounts
 
 Run `php artisan migrate:fresh --seed` to populate the database with five users
