@@ -14,7 +14,10 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# /public/build IS committed so Plesk-style deploys without Node can `git pull`
+# and get a working frontend. Vite empties this directory on every build, so
+# stale chunks don't accumulate. Build before each commit + push:
+#   npm run build && git add public/build && git commit -m "Rebuild assets"
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage

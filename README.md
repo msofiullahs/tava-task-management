@@ -71,6 +71,9 @@ npm run dev                  # Vite dev server (HMR)
 
 Tava is built to drop onto Plesk-managed MariaDB without manual schema tweaks:
 
+- **PHP 8.3 compatible** — the Composer lock file pins Symfony to v7.4.x via a
+  `platform.php = 8.3.0` constraint in [composer.json](composer.json). `composer
+  install --no-dev --optimize-autoloader` on Plesk's PHP 8.3 just works.
 - **VARCHAR is capped at 191 chars** via `Schema::defaultStringLength(191)` in
   [app/Providers/AppServiceProvider.php](app/Providers/AppServiceProvider.php).
   This keeps every indexed string column under InnoDB's 767-byte row-format limit
@@ -81,8 +84,35 @@ Tava is built to drop onto Plesk-managed MariaDB without manual schema tweaks:
   so the schema deploys on MariaDB versions older than 10.2.7 that lack JSON
   support — and on any install where JSON strict mode is misconfigured.
 
-Just point `.env`'s `DB_HOST` / `DB_USERNAME` / `DB_DATABASE` / `DB_PASSWORD` at
-the Plesk database and run `php artisan migrate`.
+### Deploy steps
+
+1. **Build the frontend locally before pushing** — `public/build/` is *committed
+   to the repo* on purpose (Plesk shared hosting typically can't run `npm`).
+   On your Mac, before each `git push`:
+   ```bash
+   npm run build
+   git add public/build && git commit -m "Rebuild assets"
+   git push
+   ```
+   Vite empties `public/build/` on every build, so stale chunks don't pile up
+   in git history. If you forget this step you'll see
+   `Illuminate\Foundation\VitemanifestNotFoundException` on the home page.
+2. On the server: `git pull && composer install --no-dev --optimize-autoloader`.
+3. `cp .env.example .env` (if not already present) and edit:
+   - `APP_URL` — your full HTTPS URL (`https://your-domain.example`)
+   - `APP_KEY` — generate with `php artisan key:generate`
+   - `DB_HOST=localhost` — Plesk runs MariaDB on the same machine. **Do not
+     leave it as `db`** — that's the docker-compose service name and won't
+     resolve here, which is the cause of `getaddrinfo for db failed` errors.
+   - `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` — copy verbatim from the
+     **Domains → your domain → Databases** panel in Plesk (including any
+     `xxxxx_` prefix Plesk adds).
+   - `SANCTUM_STATEFUL_DOMAINS` — set to your `APP_URL`'s host (e.g.
+     `your-domain.example`); cookie auth refuses requests from any other origin.
+   - `SESSION_SECURE_COOKIE=true` if you're serving over HTTPS (you should).
+4. `php artisan config:clear && php artisan migrate --force`
+5. Point the Plesk document root at `public/` (Plesk → Hosting Settings →
+   Document root).
 
 ## What's included
 
