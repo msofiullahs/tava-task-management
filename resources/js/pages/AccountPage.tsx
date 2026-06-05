@@ -3,6 +3,7 @@ import { useChangePassword, useCurrentUser, useRemoveAvatar, useUpdateProfile, u
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { PasswordField } from '../components/PasswordField';
 import { humanError } from '../lib/errors';
 import { useToast } from '../lib/toast';
 import { ROLE_LABELS } from '../types';
@@ -139,9 +140,9 @@ export function AccountPage() {
       <section className="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-500">Change password</h2>
         <form onSubmit={onPassword} className="space-y-3">
-          <TextField label="Current password" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required autoComplete="current-password" />
-          <TextField label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
-          <TextField label="Confirm new password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
+          <PasswordField label="Current password" value={current} onChange={(e) => setCurrent(e.target.value)} required autoComplete="current-password" />
+          <PasswordField label="New password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
+          <PasswordField label="Confirm new password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
           {passwordError && <div className="rounded bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">{passwordError}</div>}
           <Button type="submit" disabled={change.isPending}>{change.isPending ? 'Saving…' : 'Save password'}</Button>
         </form>

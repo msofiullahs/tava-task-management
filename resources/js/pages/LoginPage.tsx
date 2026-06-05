@@ -4,6 +4,7 @@ import { useLogin } from '../api/auth';
 import { humanError } from '../lib/errors';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { PasswordField } from '../components/PasswordField';
 import { Logo } from '../components/Logo';
 
 export function LoginPage() {
@@ -35,7 +36,7 @@ export function LoginPage() {
         </div>
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus autoComplete="email" />
-          <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+          <PasswordField label="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
               <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />

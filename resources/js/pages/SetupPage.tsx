@@ -4,6 +4,7 @@ import { useSetup } from '../api/auth';
 import { humanError } from '../lib/errors';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { PasswordField } from '../components/PasswordField';
 import { Logo } from '../components/Logo';
 
 /** Spec §5 — first-run wizard. Replaces the login form when zero users exist. */
@@ -42,8 +43,8 @@ export function SetupPage() {
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <TextField label="Your name" value={name} onChange={(e) => setName(e.target.value)} required autoFocus autoComplete="name" />
           <TextField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-          <TextField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
-          <TextField label="Confirm password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
+          <PasswordField label="Password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
+          <PasswordField label="Confirm password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
           <label className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-200">
             <input type="checkbox" checked={seed} onChange={(e) => setSeed(e.target.checked)} className="mt-0.5" />
             <span>Add a sample project so I can explore.</span>

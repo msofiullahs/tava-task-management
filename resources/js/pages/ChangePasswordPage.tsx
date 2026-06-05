@@ -4,6 +4,7 @@ import { useChangePassword, useCurrentUser } from '../api/auth';
 import { humanError } from '../lib/errors';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
+import { PasswordField } from '../components/PasswordField';
 import { Logo } from '../components/Logo';
 
 /** Spec §5 — forced-change screen after admin temp-password login. Also reachable from the user menu. */
@@ -46,10 +47,10 @@ export function ChangePasswordPage() {
         </div>
         <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           {!forced && (
-            <TextField label="Current password" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required autoComplete="current-password" />
+            <PasswordField label="Current password" value={current} onChange={(e) => setCurrent(e.target.value)} required autoComplete="current-password" />
           )}
-          <TextField label="New password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
-          <TextField label="Confirm new password" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
+          <PasswordField label="New password" value={password} onChange={(e) => setPassword(e.target.value)} required hint="At least 8 characters." autoComplete="new-password" />
+          <PasswordField label="Confirm new password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required autoComplete="new-password" />
           {error && <div className="rounded bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">{error}</div>}
           <Button type="submit" disabled={changePassword.isPending} className="w-full">
             {changePassword.isPending ? 'Saving…' : 'Save password'}
