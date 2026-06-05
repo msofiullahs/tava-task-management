@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { addDays, addMonths, endOfMonth, format, isSameDay, parseISO, startOfMonth, startOfWeek } from 'date-fns';
 import clsx from 'clsx';
+import { Calendar as CalendarIconLucide, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from './Button';
 
 interface DatePickerProps {
@@ -38,7 +39,7 @@ export function DatePicker({ value, onChange, placeholder = 'Set due date' }: Da
           !selected && 'text-slate-500 dark:text-slate-400',
         )}
       >
-        <CalendarIcon />
+        <CalendarIconLucide className="h-4 w-4" />
         <span>{label}</span>
         {selected && (
           <span
@@ -49,7 +50,7 @@ export function DatePicker({ value, onChange, placeholder = 'Set due date' }: Da
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onChange(null); } }}
             className="ml-1 inline-flex h-4 w-4 cursor-pointer items-center justify-center rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
           >
-            ×
+            <X className="h-3 w-3" />
           </span>
         )}
       </button>
@@ -99,18 +100,18 @@ function CalendarPanel({ value, onPick }: CalendarPanelProps) {
           type="button"
           aria-label="Previous month"
           onClick={() => setCursor((c) => addMonths(c, -1))}
-          className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="rounded-md p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
-          ‹
+          <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{format(cursor, 'MMMM yyyy')}</div>
         <button
           type="button"
           aria-label="Next month"
           onClick={() => setCursor((c) => addMonths(c, 1))}
-          className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="rounded-md p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
-          ›
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
       <div className="grid grid-cols-7 text-center text-[10px] uppercase tracking-wider text-slate-400">
@@ -142,14 +143,5 @@ function CalendarPanel({ value, onPick }: CalendarPanelProps) {
         })}
       </div>
     </div>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <rect x="3" y="5" width="14" height="12" rx="1.5" />
-      <path d="M7 3v4M13 3v4M3 9h14" strokeLinecap="round" />
-    </svg>
   );
 }

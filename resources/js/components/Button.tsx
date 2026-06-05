@@ -10,12 +10,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:ring-indigo-500 disabled:bg-indigo-400',
+  // Subtle indigo→violet gradient so the primary CTA has more presence than a flat fill.
+  primary:
+    'bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-sm shadow-indigo-500/20 hover:from-indigo-400 hover:to-indigo-500 hover:shadow-indigo-500/30 focus-visible:ring-indigo-500 disabled:from-indigo-400 disabled:to-indigo-400 disabled:shadow-none',
   secondary:
     'bg-white text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:hover:bg-slate-700',
   ghost:
     'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-  danger: 'bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-500',
+  danger:
+    'bg-rose-600 text-white shadow-sm shadow-rose-500/20 hover:bg-rose-500 focus-visible:ring-rose-500',
 };
 
 const sizeClasses: Record<Size, string> = {

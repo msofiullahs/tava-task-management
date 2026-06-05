@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { CornerDownRight, ListTree, MessageSquare, Paperclip, Plus, ListChecks } from 'lucide-react';
 import { useUpdateTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
 import { Avatar } from '../components/Avatar';
@@ -33,6 +34,7 @@ export function ListView({ projectKey, statuses, tasks, onOpenTask, onAddInStatu
   if (statuses.length === 0) {
     return (
       <EmptyState
+        icon={ListChecks}
         title="No statuses yet"
         description="Add a status to start tracking tasks."
       />
@@ -102,16 +104,29 @@ function Group({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: G
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     {t.parent && (
-                      <span aria-hidden className="text-xs text-slate-400" title={`Subtask of "${t.parent.title}"`}>↳</span>
+                      <CornerDownRight
+                        className="h-3.5 w-3.5 shrink-0 text-slate-400"
+                        aria-label={`Subtask of "${t.parent.title}"`}
+                      />
                     )}
                     <span className="text-slate-900 dark:text-slate-100">{t.title}</span>
                     {typeof t.subtask_count === 'number' && t.subtask_count > 0 && (
-                      <span className="text-xs text-slate-400" title={`${t.subtask_count} subtask${t.subtask_count === 1 ? '' : 's'}`}>
-                        ☰ {t.subtask_count}
+                      <span
+                        className="inline-flex items-center gap-0.5 text-xs text-slate-400"
+                        title={`${t.subtask_count} subtask${t.subtask_count === 1 ? '' : 's'}`}
+                      >
+                        <ListTree className="h-3 w-3" /> {t.subtask_count}
                       </span>
                     )}
                     {typeof t.comment_count === 'number' && t.comment_count > 0 && (
-                      <span className="text-xs text-slate-400">💬 {t.comment_count}</span>
+                      <span className="inline-flex items-center gap-0.5 text-xs text-slate-400" title="Comments">
+                        <MessageSquare className="h-3 w-3" /> {t.comment_count}
+                      </span>
+                    )}
+                    {typeof t.attachment_count === 'number' && t.attachment_count > 0 && (
+                      <span className="inline-flex items-center gap-0.5 text-xs text-slate-400" title="Attachments">
+                        <Paperclip className="h-3 w-3" /> {t.attachment_count}
+                      </span>
                     )}
                   </div>
                 </td>
@@ -142,9 +157,9 @@ function Group({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: G
                   <button
                     type="button"
                     onClick={() => onAddTask(status.id)}
-                    className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-sm font-medium text-slate-500 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+                    className="flex w-full items-center gap-1.5 px-3 py-2 text-left text-sm font-medium text-slate-500 transition hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
                   >
-                    <span aria-hidden className="text-base leading-none">+</span> Add a task
+                    <Plus className="h-4 w-4" /> Add a task
                   </button>
                 </td>
               </tr>

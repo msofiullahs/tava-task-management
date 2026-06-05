@@ -6,6 +6,7 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import clsx from 'clsx';
+import { CornerDownRight, MessageSquare, MoreHorizontal, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { useCreateStatus, useDeleteStatus, useUpdateStatus } from '../api/statuses';
 import { useMoveTask } from '../api/tasks';
 import { useCurrentUser } from '../api/auth';
@@ -198,9 +199,9 @@ function Column({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: 
             type="button"
             onClick={onDelete}
             aria-label={`Delete ${status.name}`}
-            className="rounded p-1 text-slate-400 opacity-0 hover:bg-rose-100 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-rose-900/30"
+            className="rounded p-1 text-slate-400 opacity-0 transition hover:bg-rose-100 hover:text-rose-600 group-hover:opacity-100 dark:hover:bg-rose-900/30"
           >
-            ×
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
       </header>
@@ -235,7 +236,7 @@ function Column({ projectKey, status, statuses, tasks, onOpenTask, onAddTask }: 
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
             )}
           >
-            <span aria-hidden className="text-base leading-none">+</span> Add a task
+            <Plus className="h-4 w-4" /> Add a task
           </button>
         </div>
       )}
@@ -277,19 +278,24 @@ function TaskCard({ task, statuses, onOpen, dragging }: TaskCardProps) {
       onClick={(e) => { if ((e.target as HTMLElement).closest('[data-no-open]')) return; onOpen(); }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="flex-1 font-medium text-slate-900 dark:text-slate-100">{task.title}</span>
+        <span className="flex flex-1 items-center gap-1.5 font-medium text-slate-900 dark:text-slate-100">
+          {task.parent && (
+            <CornerDownRight className="h-3 w-3 shrink-0 text-slate-400" aria-label="Subtask" />
+          )}
+          <span>{task.title}</span>
+        </span>
         {canEdit && (
           <div className="relative" data-no-open>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o); }}
               aria-label="Move to…"
-              className="rounded p-1 text-slate-400 opacity-0 hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-slate-800"
+              className="rounded p-1 text-slate-400 opacity-0 transition hover:bg-slate-100 hover:text-slate-700 group-hover:opacity-100 dark:hover:bg-slate-800"
             >
-              ⋯
+              <MoreHorizontal className="h-4 w-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-md border border-slate-200 bg-white shadow-xl ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-900 dark:ring-slate-100/5">
                 <div className="border-b border-slate-100 px-3 py-1.5 text-xs font-semibold uppercase text-slate-400 dark:border-slate-800">Move to…</div>
                 {statuses.filter((s) => s.id !== task.status_id).map((s) => (
                   <button
@@ -308,10 +314,20 @@ function TaskCard({ task, statuses, onOpen, dragging }: TaskCardProps) {
         )}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <PriorityBadge value={task.priority} />
+        <PriorityBadge value={task.priority} compact />
         {task.due_date && (
-          <span className={clsx('text-xs', isOverdue(task.due_date) ? 'text-rose-600' : 'text-slate-500')}>
+          <span className={clsx('text-xs', isOverdue(task.due_date) ? 'font-medium text-rose-600' : 'text-slate-500')}>
             {format(parseISO(task.due_date), 'MMM d')}
+          </span>
+        )}
+        {typeof task.comment_count === 'number' && task.comment_count > 0 && (
+          <span className="inline-flex items-center gap-0.5 text-xs text-slate-400" title="Comments">
+            <MessageSquare className="h-3 w-3" /> {task.comment_count}
+          </span>
+        )}
+        {typeof task.attachment_count === 'number' && task.attachment_count > 0 && (
+          <span className="inline-flex items-center gap-0.5 text-xs text-slate-400" title="Attachments">
+            <Paperclip className="h-3 w-3" /> {task.attachment_count}
           </span>
         )}
         <div className="ml-auto flex -space-x-1">

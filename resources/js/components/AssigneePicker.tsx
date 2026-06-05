@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
+import { Check } from 'lucide-react';
 import { useUsers } from '../api/users';
 import { Avatar } from './Avatar';
 
@@ -80,7 +81,7 @@ export function AssigneePicker({ selected, onChange }: AssigneePickerProps) {
               >
                 <Avatar name={u.name} src={u.avatar_url} size="sm" />
                 <span className="flex-1 text-left text-slate-900 dark:text-slate-100">{u.name}</span>
-                {selected.includes(u.id) && <span className="text-indigo-500">✓</span>}
+                {selected.includes(u.id) && <Check className="h-4 w-4 text-indigo-500" />}
               </button>
             ))}
           </div>

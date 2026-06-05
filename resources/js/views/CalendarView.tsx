@@ -3,6 +3,7 @@ import {
   addDays, addMonths, endOfMonth, format, isSameDay, isSameMonth, parseISO, startOfMonth, startOfWeek,
 } from 'date-fns';
 import clsx from 'clsx';
+import { CalendarClock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import type { Task } from '../types';
 import { EmptyState } from '../components/EmptyState';
 
@@ -40,9 +41,13 @@ export function CalendarView({ tasks, onOpenTask, onAddOnDate }: CalendarViewPro
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 lg:flex-row lg:p-6">
       <div className="flex min-w-0 flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <header className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
-          <button type="button" onClick={() => setCursor((c) => addMonths(c, -1))} className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Previous month">‹</button>
+          <button type="button" onClick={() => setCursor((c) => addMonths(c, -1))} className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100" aria-label="Previous month">
+            <ChevronLeft className="h-4 w-4" />
+          </button>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{format(cursor, 'MMMM yyyy')}</h2>
-          <button type="button" onClick={() => setCursor((c) => addMonths(c, 1))} className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Next month">›</button>
+          <button type="button" onClick={() => setCursor((c) => addMonths(c, 1))} className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100" aria-label="Next month">
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </header>
         <div className="grid grid-cols-7 border-b border-slate-200 text-center text-xs uppercase tracking-wider text-slate-400 dark:border-slate-800">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
@@ -74,7 +79,7 @@ export function CalendarView({ tasks, onOpenTask, onAddOnDate }: CalendarViewPro
               >
                 <div className="flex items-center justify-between">
                   {handleCell && (
-                    <span className="invisible text-xs font-bold text-indigo-500 group-hover:visible" aria-hidden>+</span>
+                    <Plus className="invisible h-3.5 w-3.5 text-indigo-500 group-hover:visible" aria-hidden />
                   )}
                   <div className={clsx(
                     'ml-auto text-xs',
@@ -107,7 +112,13 @@ export function CalendarView({ tasks, onOpenTask, onAddOnDate }: CalendarViewPro
       <aside className="w-full shrink-0 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 lg:w-72">
         <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Unscheduled</h3>
         {unscheduled.length === 0 ? (
-          <EmptyState title="Nothing unscheduled" description="Tasks without a due date will show up here." className="border-none p-0 py-6" />
+          <EmptyState
+            icon={CalendarClock}
+            size="sm"
+            title="Nothing unscheduled"
+            description="Tasks without a due date will show up here."
+            className="border-none p-0"
+          />
         ) : (
           <ul className="space-y-1">
             {unscheduled.map((t) => (

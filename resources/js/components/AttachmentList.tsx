@@ -1,5 +1,6 @@
 import { useRef, useState, type DragEvent } from 'react';
 import clsx from 'clsx';
+import { Download, Eye, File, Link2, Paperclip, Trash2 } from 'lucide-react';
 import { useDeleteAttachment, useUploadAttachment } from '../api/attachments';
 import { useCurrentUser } from '../api/auth';
 import { useToast } from '../lib/toast';
@@ -114,7 +115,7 @@ export function AttachmentList({
               'dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-500 dark:hover:text-indigo-300',
             )}
           >
-            <PaperclipIcon /> {upload.isPending ? 'Uploading…' : compact ? 'Attach file' : 'Attach files'}
+            <Paperclip className="h-3.5 w-3.5" /> {upload.isPending ? 'Uploading…' : compact ? 'Attach file' : 'Attach files'}
           </button>
           {!compact && <span className="text-xs text-slate-400">…or drop them here</span>}
         </div>
@@ -166,7 +167,7 @@ function AttachmentTile({ att, compact, canDelete, onPreview, onDownload, onCopy
           <img src={att.url} alt={att.original_name} className="h-full w-full object-cover" />
           {!compact && (
             <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/0 text-white opacity-0 transition group-hover/img:bg-slate-900/40 group-hover/img:opacity-100">
-              <EyeIcon />
+              <Eye className="h-3.5 w-3.5" />
             </span>
           )}
         </button>
@@ -180,7 +181,7 @@ function AttachmentTile({ att, compact, canDelete, onPreview, onDownload, onCopy
             compact ? 'h-12 w-12 shrink-0' : 'aspect-video w-full',
           )}
         >
-          <FileIcon />
+          <File className="h-8 w-8" />
         </button>
       )}
 
@@ -197,12 +198,12 @@ function AttachmentTile({ att, compact, canDelete, onPreview, onDownload, onCopy
           <span>{sizeLabel}</span>
           <div className="flex gap-0.5">
             {att.is_image && (
-              <IconButton onClick={onPreview} title="Preview"><EyeIcon /></IconButton>
+              <IconButton onClick={onPreview} title="Preview"><Eye className="h-3.5 w-3.5" /></IconButton>
             )}
-            <IconButton onClick={onDownload} title="Download"><DownloadIcon /></IconButton>
-            <IconButton onClick={onCopy} title="Copy link"><LinkIcon /></IconButton>
+            <IconButton onClick={onDownload} title="Download"><Download className="h-3.5 w-3.5" /></IconButton>
+            <IconButton onClick={onCopy} title="Copy link"><Link2 className="h-3.5 w-3.5" /></IconButton>
             {canDelete && (
-              <IconButton onClick={onDelete} title="Remove" tone="danger">×</IconButton>
+              <IconButton onClick={onDelete} title="Remove" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconButton>
             )}
           </div>
         </div>
@@ -236,46 +237,4 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function PaperclipIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M13.5 6.5 7.4 12.6a2 2 0 0 0 2.8 2.8l6.1-6.1a4 4 0 0 0-5.7-5.7L4.5 9.7a6 6 0 1 0 8.5 8.5l4.2-4.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function FileIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden>
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-      <path d="M14 3v5h5" />
-    </svg>
-  );
-}
-
-function LinkIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M8 12a4 4 0 0 1 0-5.66l2-2a4 4 0 0 1 5.66 5.66l-1.5 1.5M12 8a4 4 0 0 1 0 5.66l-2 2a4 4 0 0 1-5.66-5.66l1.5-1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M10 3v10m0 0-4-4m4 4 4-4M4 17h12" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function EyeIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-      <path d="M1.5 10S4 4 10 4s8.5 6 8.5 6-2.5 6-8.5 6S1.5 10 1.5 10Z" />
-      <circle cx="10" cy="10" r="2.5" />
-    </svg>
-  );
 }

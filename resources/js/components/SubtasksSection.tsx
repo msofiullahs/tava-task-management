@@ -1,5 +1,6 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
+import { ListTree } from 'lucide-react';
 import { useTasks } from '../api/tasks';
 import { useCreateSubtask } from '../api/links';
 import { useToast } from '../lib/toast';
@@ -51,10 +52,10 @@ export function SubtasksSection({ task, statuses, onOpenSubtask, readOnly }: Sub
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-          Subtasks
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <ListTree className="h-4 w-4 text-slate-400" /> Subtasks
           {children.length > 0 && (
-            <span className="ml-2 text-xs font-normal text-slate-400">
+            <span className="text-xs font-normal text-slate-400">
               {doneCount}/{children.length} done
             </span>
           )}

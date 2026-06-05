@@ -12,6 +12,7 @@ import { PriorityPicker } from './PriorityPicker';
 import { StatusSelect } from './StatusSelect';
 import { Avatar } from './Avatar';
 import { AttachmentList } from './AttachmentList';
+import { CornerDownRight, Paperclip, Trash2 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { LinkedTasksSection } from './LinkedTasksSection';
 import { SubtasksSection } from './SubtasksSection';
@@ -80,7 +81,7 @@ export function TaskDetailPanel({ task, statuses, onClose, onOpenTask }: TaskDet
             className="-mb-1 inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300"
             title="Open parent task"
           >
-            <span aria-hidden>↳</span> Subtask of <span className="font-medium">{task.parent.title}</span>
+            <CornerDownRight className="h-3 w-3" aria-hidden /> Subtask of <span className="font-medium">{task.parent.title}</span>
           </button>
         )}
         <input
@@ -155,7 +156,7 @@ export function TaskDetailPanel({ task, statuses, onClose, onOpenTask }: TaskDet
         {canEdit && (
           <div className="flex justify-end border-t border-slate-200 pt-4 dark:border-slate-800">
             <Button variant="danger" onClick={onDelete} disabled={remove.isPending}>
-              Delete task
+              <Trash2 className="h-4 w-4" /> Delete task
             </Button>
           </div>
         )}
@@ -264,8 +265,9 @@ function AttachToComment({ commentId }: { commentId: number }) {
       <button
         type="button"
         onClick={() => fileInput.current?.click()}
-        className="text-slate-400 hover:text-indigo-600"
+        className="inline-flex items-center gap-1 text-slate-400 transition hover:text-indigo-600"
       >
+        <Paperclip className="h-3 w-3" />
         {upload.isPending ? 'Uploading…' : 'Attach file'}
       </button>
     </>

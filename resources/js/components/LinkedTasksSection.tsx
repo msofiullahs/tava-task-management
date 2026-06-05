@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import { Link2, Plus, X } from 'lucide-react';
 import { useCreateTaskLink, useDeleteTaskLink, useTaskLinks } from '../api/links';
 import { TaskPicker } from './TaskPicker';
 import { Button } from './Button';
@@ -70,10 +71,13 @@ export function LinkedTasksSection({ task, onOpenLinkedTask, readOnly }: LinkedT
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Linked tasks</h3>
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <Link2 className="h-4 w-4 text-slate-400" /> Linked tasks
+        </h3>
         {!readOnly && (
           <Button size="sm" variant="ghost" onClick={() => setAdding((o) => !o)}>
-            {adding ? 'Cancel' : '+ Add link'}
+            {adding ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            {adding ? 'Cancel' : 'Add link'}
           </Button>
         )}
       </div>
@@ -133,9 +137,9 @@ export function LinkedTasksSection({ task, onOpenLinkedTask, readOnly }: LinkedT
                           onError: (err) => toast({ message: humanError(err), tone: 'error' }),
                         })}
                         aria-label="Remove link"
-                        className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30"
+                        className="rounded-md p-1 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-900/30"
                       >
-                        ×
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </li>

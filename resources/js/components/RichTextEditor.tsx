@@ -5,6 +5,10 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import Link from '@tiptap/extension-link';
 import clsx from 'clsx';
+import {
+  Bold, Code, Heading2, Image as ImageIcon, Italic, Link as LinkIcon,
+  List, ListOrdered, Quote, Strikethrough,
+} from 'lucide-react';
 import http from '../lib/axios';
 import { useToast } from '../lib/toast';
 import { humanError } from '../lib/errors';
@@ -144,17 +148,17 @@ function Toolbar({ editor, taskId }: { editor: Editor; taskId?: number }) {
 
   return (
     <div className="flex flex-wrap items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-800/40">
-      <Btn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold (⌘B)"><b>B</b></Btn>
-      <Btn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic (⌘I)"><i>I</i></Btn>
-      <Btn active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()} title="Strikethrough"><s>S</s></Btn>
-      <Btn active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()} title="Inline code">{`<>`}</Btn>
+      <Btn active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold (⌘B)"><Bold className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic (⌘I)"><Italic className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()} title="Strikethrough"><Strikethrough className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()} title="Inline code"><Code className="h-3.5 w-3.5" /></Btn>
       <Divider />
-      <Btn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="Heading">H</Btn>
-      <Btn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet list">•</Btn>
-      <Btn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list">1.</Btn>
-      <Btn active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Quote">"</Btn>
+      <Btn active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="Heading"><Heading2 className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet list"><List className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered list"><ListOrdered className="h-3.5 w-3.5" /></Btn>
+      <Btn active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Quote"><Quote className="h-3.5 w-3.5" /></Btn>
       <Divider />
-      <Btn active={editor.isActive('link')} onClick={addLink} title="Link">↗</Btn>
+      <Btn active={editor.isActive('link')} onClick={addLink} title="Link"><LinkIcon className="h-3.5 w-3.5" /></Btn>
       <input
         ref={fileInput}
         type="file"
@@ -162,7 +166,7 @@ function Toolbar({ editor, taskId }: { editor: Editor; taskId?: number }) {
         className="hidden"
         onChange={(e) => { onPickFile(e.target.files?.[0]); e.target.value = ''; }}
       />
-      <Btn onClick={() => fileInput.current?.click()} title="Insert image">🖼</Btn>
+      <Btn onClick={() => fileInput.current?.click()} title="Insert image"><ImageIcon className="h-3.5 w-3.5" /></Btn>
     </div>
   );
 }

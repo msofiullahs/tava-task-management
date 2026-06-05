@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   open: boolean;
@@ -17,16 +18,25 @@ const sizeClasses = {
 };
 
 export function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
+  // Two-stage state: mount with shown=false, then flip true next frame so the CSS
+  // transition runs from the off → on state (fade in + subtle scale).
+  const [shown, setShown] = useState(false);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setShown(false);
+      return;
+    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
+    const id = requestAnimationFrame(() => setShown(true));
     return () => {
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = '';
+      cancelAnimationFrame(id);
     };
   }, [open, onClose]);
 
@@ -34,13 +44,20 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center" role="dialog" aria-modal>
-      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} aria-hidden />
       <div
         className={clsx(
-          'relative w-full rounded-t-2xl bg-white shadow-xl sm:rounded-2xl',
-          'flex max-h-[95vh] flex-col',
-          'dark:bg-slate-900',
+          'absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity duration-150',
+          shown ? 'opacity-100' : 'opacity-0',
+        )}
+        onClick={onClose}
+        aria-hidden
+      />
+      <div
+        className={clsx(
+          'relative flex max-h-[95vh] w-full flex-col rounded-t-2xl bg-white shadow-2xl ring-1 ring-slate-200/50 transition-all duration-150',
+          'sm:rounded-2xl dark:bg-slate-900 dark:ring-slate-800/50',
           sizeClasses[size],
+          shown ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-2 scale-[0.98] opacity-0',
         )}
       >
         {title && (
@@ -50,9 +67,9 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             >
-              ×
+              <X className="h-4 w-4" />
             </button>
           </div>
         )}
